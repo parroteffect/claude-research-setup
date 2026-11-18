@@ -3,7 +3,7 @@
 Main Research Lead가 monk로 선택한 연구 과제에 적용한다.
 `.claude/research-workflow/guides/research.md`의 연구 품질 기준과 함께 읽으며, 관련 방법론의 조사 범위와
 선행연구 대조 시점에는 이 guide를 적용한다. Engineer도 해당 과제를 위임받으면 읽는다.
-USER-ONLY 실행, main의 직접 검수, single-writer와 high/xhigh 규칙은 root CLAUDE.md를 따른다.
+USER-ONLY 실행, main의 직접 검수, single-writer와 engineer model·effort 규칙은 root CLAUDE.md를 따른다.
 
 ## 목표
 - 중요한 문제의 구조와 수학적 원리에서 출발해, 영향력 있는 연구의 축과 novelty가

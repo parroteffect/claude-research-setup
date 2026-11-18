@@ -67,13 +67,14 @@ Init 이후의 허용된 준비/preflight는 RUN 예약을 사용한다. Frozen 
 | 역할 | 책임 | 실제 spawn effort |
 |---|---|---|
 | Main Research Lead | 메커니즘·유도·반례·실험설계·직접 코드 검수·연구 학습 | 사용자 설정 유지 |
-| Engineer | 단일 코드 writer, 구현·debug·tiny local checks·RUNBOOK | high, 복잡한 수식/수치 정합성은 xhigh |
+| Engineer | 단일 코드 writer, 구현·debug·tiny local checks·RUNBOOK | Opus, xhigh 고정 (`model: "opus"` 인자) |
 | QA | 독립적으로 계약/코드/config/비교/누수/실제revision/비용/출력 검수 | 반복조건·로그는 medium; 최초 evaluator·metric/split 변경·수학적 유효성은 high |
 | Supervisor | 기여 가능성·근거·경쟁설명·실패조건·목표 적합성 판단 | routine high; 중요한 판단 xhigh |
 
 Supervisor의 중요한 판단은 최종 shortlist 채택, 유망 연구 방향의 기각, 논쟁적 과학 기각,
 중요한 연구 방향 변경, 결정적 수학 판단이다. 모든 반복을 xhigh로 만들지는 않는다.
-Model은 사용자 선택을 보존하며 역할 파일(`.claude/agents/*.md`)에 model을 pin하지 않는다.
+Engineer는 사용자 지정에 따라 `model: "opus"` 인자로 생성한다. Main·QA·Supervisor의 model은 사용자 선택을
+보존하며 역할 파일(`.claude/agents/*.md`)에 model을 pin하지 않는다.
 역할 파일의 `effort: high`는 인자를 생략했을 때의 project default일 뿐이고, 실제 값은 Main이
 Agent 도구 호출의 `effort` 인자로 매번 지정한다(QA medium 포함). Requested와 observed/resolved effort를 구분한다.
 Followup으로 thread effort가 바뀌었다고 가정하지 않는다. 변경이 필요하면 근거를 보존하고

@@ -111,10 +111,10 @@
   QA/Supervisor는 추가 agent를 생성하지 않는다. 사용자의 최종 테스트 선택을 대신하지 않는다.
 - Goal의 Engineer1+QA1+Supervisor1은 Main 제외 동일3 subagent 슬롯을 공유한다.
   아래 일반 최대3 Engineer 규칙을 goal에서 3 Engineer+2 reviewer로 확대하지 않는다.
-- Engineer effort high/xhigh는 유지한다. QA 반복조건/로그는 medium, 최초 evaluator·metric/split·
+- Engineer는 Opus·xhigh 규칙을 유지한다. QA 반복조건/로그는 medium, 최초 evaluator·metric/split·
   수학적 유효성은 high. Supervisor routine은 high, 최종 shortlist 채택·유망 방향 기각·
   논쟁적 과학 기각·중요한 방향 변경·결정적 수학 판단은 xhigh다. 실제 spawn의 `effort` 인자로
-  선택하고 model pin 없이 기존 model과 Main 설정을 보존한다. Thread 재사용은 effort 변경이 아니다.
+  선택하고 QA·Supervisor는 model pin 없이 기존 model을, Main은 기존 설정을 보존한다. Thread 재사용은 effort 변경이 아니다.
 - 실행 상태·QA validity·가설 판정을 분리한다. Heavy/unknown/over-budget 검증은 NEEDS_USER_RUN이며
   과학적 기각이 아니다. 예산 소진·후보 부족은 GOAL_MET가 아니다. 목표의 모든 조건과 evidence class,
   독립 QA/Supervisor 근거·mechanism 중복 제거를 확인해야 한다. Monk novelty는 미확인으로 남긴다.
@@ -267,25 +267,26 @@
 ## Main 전용: engineering reasoning effort
 - Main의 model·reasoning effort는 사용자가 관리한다.
   위임을 위해 main의 설정(/model, /effort, settings)을 임의로 변경하지 않는다.
-- Engineer를 생성(spawn)할 때 작업 난도에 따라 reasoning effort를 선택한다.
-  기본은 high이며 high / xhigh만 사용한다. max를 포함한 다른 effort는 선택하지 않는다.
-- 코드 탐색, 명확한 명세의 구현, 일반적인 디버깅, 테스트·실행 가이드 작성은 high로 한다.
-- 복잡한 수식·알고리즘의 구현, 미묘한 수치·gradient 오류 분석,
-  여러 모듈에 걸친 정합성 문제처럼 깊은 추론이 필요한 작업은 xhigh로 한다.
-  작업량이 많거나 high에서 한 번 실패했다는 이유만으로 자동 승격하지 않는다.
-- 선택은 main이 수행하며 매번 사용자 확인을 요구하지 않는다.
-  선택한 effort와 짧은 근거를 위임 기록에 남긴다.
-- 이 문서는 Agent 도구의 `effort` 인자 사용을 명시적으로 요청한다. 선택한 값은 매 spawn의
-  실제 `effort` 인자에 반영하고 생략하지 않는다. 위임 메시지에 high / xhigh를 적는 것만으로
-  설정했다고 간주하지 않는다. `model` 인자는 사용자가 요청하지 않는 한 넘기지 않는다.
+- Engineer는 Opus와 reasoning effort xhigh로 생성(spawn)한다. 사용자가 engineering 작업의 비용을
+  고려해 정한 고정값이며, Agent 도구의 `opus`는 2026-11 기준 Opus 5.5를 가리킨다.
+- 작업 난도·작업량·이전 실패를 이유로 engineer의 model이나 effort를 바꾸지 않는다.
+  Main의 model, high, max를 포함한 다른 조합은 사용자가 요청한 경우에만 쓴다.
+  다른 조합이 필요하다고 판단하면 근거와 함께 사용자에게 제안한다.
+- 이 값을 쓰는 데 매번 사용자 확인을 요구하지 않는다.
+  실제로 넘긴 model·effort를 위임 기록에 남긴다.
+- 이 문서는 Agent 도구의 `effort` 인자 사용을 명시적으로 요청한다. Engineer의 매 spawn에 실제 인자
+  `model: "opus"`와 `effort: "xhigh"`를 넘기고 생략하지 않는다. 위임 메시지에 model이나 effort를
+  적는 것만으로 설정했다고 간주하지 않는다. QA·Supervisor에는 사용자가 요청하지 않는 한
+  `model` 인자를 넘기지 않는다.
 - `.claude/agents/`의 engineer·qa·supervisor 파일에 있는 `effort: high`는 인자를 생략했을 때
   세션 effort(max 포함)를 상속하지 않게 하는 project default다. 이 값을 다른 level로 바꾸거나
-  `model`을 고정하지 않는다. Spawn별 effort 인자를 지원하지 않는 Claude Code 버전이거나
+  `model`을 고정하지 않는다. Engineer의 model·effort는 역할 파일이 아니라 spawn 인자로 정한다.
+  Spawn별 model·effort 인자를 지원하지 않는 Claude Code 버전이거나 `opus`가 가리키는 model이 바뀌었거나
   `CLAUDE_CODE_EFFORT_LEVEL` 같은 상위 override·충돌 설정이 있으면 알리고 설정 성공을 주장하지 않는다.
-- 같은 engineer에게 SendMessage로 후속 지침을 보낸다고 effort가 자동으로 바뀐다고 가정하지 않는다.
-  다른 effort가 꼭 필요하면 작업·diff·미해결 사항을 기록하고 기존 작업 중단을 확인한 뒤,
-  기존 thread를 정리하고 새 effort로 engineer를 생성한다. 동시 writer는 하나로 유지한다.
-- Effort 선택은 추론 설정일 뿐이다. xhigh에서도 무거운 최종 검증은 USER-ONLY이며
+- 같은 engineer에게 SendMessage로 후속 지침을 보낸다고 model이나 effort가 바뀐다고 가정하지 않는다.
+  다른 설정으로 생성된 thread를 이 설정으로 옮겨야 하면 작업·diff·미해결 사항을 기록하고 기존 작업 중단을
+  확인한 뒤, 기존 thread를 정리하고 새 engineer를 생성한다. 동시 writer는 하나로 유지한다.
+- Model·effort 선택은 추론 설정일 뿐이다. 무거운 최종 검증은 USER-ONLY이며
   실행·변경 권한, 가벼운 검증 한도와 완료 기준은 동일하다.
 
 ## Main 전용: 검수와 사용자 실행 handoff

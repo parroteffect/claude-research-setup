@@ -8,13 +8,13 @@
 연구 상태는 세션 slot(`claude0`, `claude1`…, Codex는 `codex0`, `codex1`…) 단위로 나뉘어, 두 harness는 물론
 같은 harness의 세션 여러 개도 한 프로젝트에서 각자의 연구 상태로 독립적으로 작업합니다.
 
-Main의 model/effort는 사용자가 관리합니다. Engineering은 기본 `high`, 깊은 추론이 필요한 작업은
-main이 spawn 시 Agent 도구의 `effort` 인자로 `xhigh`를 선택합니다. Main은 소스 코드·diff·호출부·테스트를
+Main의 model/effort는 사용자가 관리합니다. Engineer는 main이 spawn 시 Agent 도구의 `model: "opus"`·
+`effort: "xhigh"` 인자로 생성합니다(Opus + xhigh 고정, upstream과 다른 점). Main은 소스 코드·diff·호출부·테스트를
 직접 읽고 검수하며, 새로운 문제·방법·메커니즘과 핵심 수학적 분석을 직접 발전시킵니다.
 
 연구 정책(연구 기여, standard/monk, interactive-research, goal overlay, USER-ONLY, 변경 영향에 맞는 검증)의
 내용은 upstream과 같습니다. 각 기능의 설명은 upstream README와 설치되는 guide를 참고하세요.
-버전은 `<upstream version>+claude.<n>` 형식입니다(현재 `5.6.0+claude.1`).
+버전은 `<upstream version>+claude.<n>` 형식입니다(현재 `5.6.0+claude.2`).
 
 ## Codex 패키지와의 대응
 
@@ -28,6 +28,7 @@ main이 spawn 시 Agent 도구의 `effort` 인자로 `xhigh`를 선택합니다.
 | 설치 metadata·백업 | `.codex/research-workflow-install.json`, `-backups/` | `.claude/research-workflow/install.json`, `backups/` |
 | Subagent 기본 effort | `.codex/config.toml`의 `default_subagent_reasoning_effort = "high"` | 역할 파일 frontmatter의 `effort: high` |
 | Spawn별 effort 선택 | spawn 도구의 reasoning effort 인자 | Agent 도구의 `effort` 인자 (Claude Code v2.1.292+) |
+| Engineer의 model·effort | 사용자 model, high / xhigh 중 main이 선택 | Opus + xhigh 고정 (`model: "opus"`, `effort: "xhigh"` 인자) |
 | 동시 subagent 3개 | `.codex/config.toml`로 설정 | 지침 수준의 한도 (설정 파일을 건드리지 않음) |
 | 중첩 spawn 금지 | 역할 지침 | 역할 지침 + `disallowedTools: Agent` |
 | 기존 thread 재사용 | followup | `SendMessage` |
@@ -42,8 +43,9 @@ Claude Code에서 달라지는 점은 세 가지입니다.
 
 - **Effort.** Codex에서는 역할 파일의 pin이 spawn 인자를 이기므로 pin을 금지합니다. Claude Code에서는
   spawn 인자가 역할 파일보다 우선하므로, 역할 파일의 `effort: high`를 “인자를 생략했을 때 세션 effort(max 포함)를
-  상속하지 않게 하는 project default”로 둡니다. 실제 선택은 여전히 main이 매 spawn의 `effort` 인자로 합니다.
-  `model`은 고정하지 않습니다. `CLAUDE_CODE_EFFORT_LEVEL`이 설정되어 있으면 이 모두를 override하므로 `--check`가 알려줍니다.
+  상속하지 않게 하는 project default”로 둡니다. 실제 값은 여전히 main이 매 spawn의 인자로 넘깁니다.
+  Engineer는 upstream의 high / xhigh 선택 대신 사용자가 정한 Opus + xhigh 고정입니다(`5.6.0+claude.2`부터).
+  역할 파일에는 `model`을 고정하지 않으며, QA·Supervisor는 upstream의 effort 규칙과 사용자 model을 그대로 씁니다. `CLAUDE_CODE_EFFORT_LEVEL`이 설정되어 있으면 이 모두를 override하므로 `--check`가 알려줍니다.
 - **간접 실행 경로.** USER-ONLY의 “간접 실행 금지”에 Claude Code의 background Bash·Monitor, Workflow,
   예약·원격 agent, headless `claude`/`codex` 호출을 명시했습니다.
 - **연구 기억.** 연구 상태의 기준은 세션 slot의 `research/STATE.claude<N>.md`입니다. Claude Code의 auto memory는

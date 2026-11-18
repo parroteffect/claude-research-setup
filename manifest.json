@@ -1,6 +1,6 @@
 {
   "package": "claude-research-workflow",
-  "version": "5.6.0+claude.1",
+  "version": "5.6.0+claude.2",
   "upstream": {
     "package": "codex-research-workflow",
     "version": "5.6.0",
@@ -11,7 +11,7 @@
       "source": "payload/CLAUDE.block.md",
       "destination": "CLAUDE.md",
       "mode": "claude-block",
-      "sha256": "623ab53c502b2503d5aeb5dff9375600318c8a6cb43cb25aac37ad70a4fad60a"
+      "sha256": "c0a563535c920aadeafec471ffe65d14eb42751f00fe70ae6ad9147a4e884817"
     },
     {
       "source": "payload/AGENTS.coexistence.md",
@@ -23,7 +23,7 @@
       "source": "payload/.claude/agents/engineer.md",
       "destination": ".claude/agents/engineer.md",
       "mode": "managed-file",
-      "sha256": "26d3b1776f2305d5e5224aa09ba432076e5038f6d1cef32caacb01135d33cd74"
+      "sha256": "cc58d08112942f542b2ab0c659cd7c1abc5d20aa86caa12cce14805c9e8abd3d"
     },
     {
       "source": "payload/.claude/agents/qa.md",
@@ -47,7 +47,7 @@
       "source": "payload/.claude/research-workflow/guides/monk.md",
       "destination": ".claude/research-workflow/guides/monk.md",
       "mode": "managed-file",
-      "sha256": "6b4a8a00c0c03714776df2208e7ec9a16754adcc0e2897e4fdbc377dcce70898"
+      "sha256": "0eef2eb37fa2c3510ca120653c6ce783b67561c224fa172bda050e001a49f82b"
     },
     {
       "source": "payload/.claude/research-workflow/guides/code-review.md",
@@ -65,7 +65,7 @@
       "source": "payload/.claude/research-workflow/guides/goal.md",
       "destination": ".claude/research-workflow/guides/goal.md",
       "mode": "managed-file",
-      "sha256": "7bb1afca6f6df6aa128ee68778f981e3c6235ad2f7dc5f1824fd962144c1cc3c"
+      "sha256": "7d152459f564b63617a811123251d6a95db5bf2c6153d077dc49c91726499780"
     },
     {
       "source": "payload/.claude/research-workflow/guides/interactive-research.md",
@@ -83,13 +83,13 @@
       "source": "payload/.claude/research-workflow/VERIFY_SETUP.md",
       "destination": ".claude/research-workflow/VERIFY_SETUP.md",
       "mode": "managed-file",
-      "sha256": "fb5f2d056537c7c5fa0a5411d85b12c1cec739e34d57f390fc6f32cef60b7fd2"
+      "sha256": "0c80af1d689fffbaa827161d7641630fabd122075697684f5fc60faba41e09c7"
     },
     {
       "source": "payload/.claude/research-workflow/RESEARCH_START.txt",
       "destination": ".claude/research-workflow/RESEARCH_START.txt",
       "mode": "managed-file",
-      "sha256": "e79fd7566015eef9bcb4f063d1926905c39b7adbc67c44616dbeb3edff2b9ded"
+      "sha256": "30b050d40805ee735de5e5acb546fc9b00bc78f31577c53cb565675de1a70443"
     },
     {
       "source": "payload/.claude/research-workflow/GOAL_EXAMPLE.md",

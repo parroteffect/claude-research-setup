@@ -12,7 +12,7 @@ Main은 설치에 필요한 파일 확인·병합·가벼운 정적 검증을 �
 - 출력 간결함·최소 구현 수정·USER-ONLY 실행을 연구 탐색의 폭과 깊이 제한으로 바꾸지 않는다.
 - Engineer가 구현·가벼운 검증·사용자 실행 RUNBOOK 준비를 맡는다.
 - Main model/effort는 사용자 선택을 그대로 보존한다.
-- Engineer는 default `high`, 필요하면 main이 실제 spawn의 `effort` 인자로 `xhigh`; `max` 사용 금지.
+- Engineer는 main이 실제 spawn 인자 `model: "opus"`, `effort: "xhigh"`로 생성한다(고정). 다른 조합은 사용자 요청 시에만.
   역할 파일의 `effort: high`는 default로 유지하고 `model`은 고정하지 않는다.
 - 무거운 실제 테스트·학습·평가·benchmark·데이터 준비는 사용자만 실행한다.
 - 설치 요청만으로 monk·interactive-research·goal을 활성화하지 않는다.

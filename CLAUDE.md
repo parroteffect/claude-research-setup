@@ -38,8 +38,10 @@ When asked to maintain this distribution:
     reports an untouched form as a record to carry over nor keeps it instead of the current form;
   - the slot protocol is instruction-level, not a lock; keep the two packages' wording of it aligned;
   - keep markers, metadata, and backup paths distinct from the Codex package's.
-- Keep main's direct code access, single writer, USER-ONLY final experiments, and adaptive
-  high/xhigh. Role files keep `effort: high` as the default only, no `model`, and `Agent` disallowed.
+- Keep main's direct code access, single writer and USER-ONLY final experiments. Engineer spawns pass
+  `model: "opus"` and `effort: "xhigh"` (fixed by the user since `5.6.0+claude.2`; a deliberate difference
+  from upstream's adaptive high/xhigh). QA and Supervisor keep upstream's effort rules and the user's model.
+  Role files keep `effort: high` as the default only, no `model`, and `Agent` disallowed.
 - Preserve active research invention and mathematical analysis; do not add rigid idea quotas
   or claim a measured creativity/potential improvement without evidence.
 - After intentional payload edits run `python3 -B scripts/update_manifest.py`.

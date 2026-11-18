@@ -82,7 +82,7 @@ class PolicyTests(unittest.TestCase):
                        "research/STATE.codex<N>.md", "research/notes-codex<N>/", "research/GOAL_CONFIG.codex<N>.md",
                        "research/goals-codex<N>/", "이름에 harness가 없는 이전 경로", "코드 working tree는 하나다",
                        "Agent 도구의 `effort` 인자 사용을 명시적으로 요청한다", '`subagent_type: "engineer"`',
-                       "high / xhigh만 사용한다", "USER-ONLY", "auto memory", "SendMessage",
+                       '`model: "opus"`', '`effort: "xhigh"`', "USER-ONLY", "auto memory", "SendMessage",
                        "Agent 도구를 disallow한다"):
             self.assertIn(needle, block)
         self.assertNotIn(installer.BEGIN, block)

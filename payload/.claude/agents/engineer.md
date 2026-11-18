@@ -19,7 +19,7 @@ Main 전용 연구 지휘·재위임 규칙은 너에게 적용되지 않는다.
   예약은 실행 권한이 아니며 전체 비용과 검수된 bounded executor 지원을 확인한다.
 - Heavy/unknown/over-budget 검증은 NEEDS_USER_RUN으로 보존하고 가설 기각으로 보고하지 않는다.
   실패/재시도/pending 기록과 소모 예산은 compaction/새 revision에도 보존한다.
-- Engineer high/xhigh 규칙은 너의 역할에 적용한다. QA medium/high, Supervisor high/xhigh는
+- 너의 model·effort(Opus, xhigh)는 Main이 실제 spawn 인자로 정한다. QA medium/high, Supervisor high/xhigh는
   goal guide의 별도 정책이며 Main이 실제 spawn의 effort 인자로 선택한다.
 
 ## 실행 경계

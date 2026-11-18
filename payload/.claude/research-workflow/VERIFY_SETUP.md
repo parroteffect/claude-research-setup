@@ -10,7 +10,7 @@
    없는지 본다. `/memory`로 로드된 파일 목록을 사용자가 직접 확인할 수 있다.
    User/managed 설정과 환경 변수는 관련 key만 확인하고 secret을 출력하지 않는다.
 2. Main model/effort는 사용자의 기존 선택을 유지한다. 이번 검증을 위해 변경하지 않는다.
-3. 사용할 수 있는 실제 Agent 도구에서 `engineer` subagent 등록과 `effort` 인자 지원을 확인한다.
+3. 사용할 수 있는 실제 Agent 도구에서 `engineer` subagent 등록과 `model`·`effort` 인자 지원을 확인한다.
    등록되지 않았거나 도구가 해당 선택을 지원하지 않으면 그 항목은 BLOCKED/NOT_VERIFIED다.
    `.claude/agents/` 디렉터리가 이번 설치로 처음 생겼다면 재시작 전 세션에는 등록되지 않을 수 있다.
 4. 사용자가 이 문서의 검증을 요청했다면 아래 읽기 전용 작업을 **한 번만** high로 위임한다.
@@ -34,21 +34,21 @@
 - 파일·문구 확인은 runtime 행동 준수·창의성·연구 성과의 검증이 아니다.
 
 ## Engineer에 보낼 작업
-- Agent 도구: `subagent_type: "engineer"`, `effort: "high"`. `model` 인자는 넘기지 않는다.
+- Agent 도구: `subagent_type: "engineer"`, `model: "opus"`, `effort: "xhigh"`.
 - Mode: inspect. 파일 수정·코드 실행·추가 agent 생성 금지.
 - Read: CLAUDE.md, .claude/agents/engineer.md.
 - Return: (a) heavy final tests의 실행 주체, (b) main의 직접 코드 읽기/검수 권한,
   (c) 명세 변경의 결정 주체를 짧게 답하고 해당 파일/절을 가리킨다.
-- Effort는 위임 문자열이 아니라 main이 **실제 spawn의 effort 인자**에서 high로 선택한다.
+- Model과 effort는 위임 문자열이 아니라 main이 **실제 spawn 인자**로 넘긴다(opus, xhigh).
 
 ## 판단
 - Main이 실제 engineer spawn/결과 수신을 확인했으면 delegation 확인으로 기록한다.
-- 실제 호출 metadata나 도구 반환에서 effort가 확인되면 관찰된 적용값을 기록한다.
-- 도구에 high를 보냈지만 최종 resolved effort가 보이지 않으면
-  `requested=high; resolved=NOT_VERIFIED`라고 적는다.
-- Engineer가 “나는 high다”라고 말한 것은 runtime 설정 증거가 아니다.
-- xhigh 호출을 수행하지 않았다면 xhigh runtime 검증은 NOT_RUN이다.
-  high가 통과했다는 이유로 둘 다 검증됐다고 하지 않는다.
+- 실제 호출 metadata나 도구 반환에서 model·effort가 확인되면 관찰된 적용값을 기록한다.
+- 도구에 opus·xhigh를 보냈지만 최종 resolved 값이 보이지 않으면
+  `requested=opus/xhigh; resolved=NOT_VERIFIED`라고 적는다.
+- Engineer가 “나는 Opus xhigh다”라고 말한 것은 runtime 설정 증거가 아니다.
+- QA·Supervisor의 medium/high/xhigh 호출을 수행하지 않았다면 그 runtime 검증은 NOT_RUN이다.
+  Engineer 호출이 통과했다는 이유로 함께 검증됐다고 하지 않는다.
 - 역할 파일의 `effort: high`는 인자 생략 시의 default다. Spawn 인자가 이 default보다 우선하는지,
   `CLAUDE_CODE_EFFORT_LEVEL` 같은 상위 override가 없는지는 관측하지 못했다면 NOT_VERIFIED다.
 - 짧은 정책 답변은 지침 이해의 제한적인 증거이지, 장기 행동 준수의 보장이 아니다.
