@@ -40,6 +40,10 @@ Main 전용 연구 지휘·재위임 규칙은 너에게 적용되지 않는다.
 - 적용되는 CLAUDE.md(Research workflow block), 위임 메시지, 지정한 SPEC revision과 관련 자료를 읽는다.
   같은 프로젝트의 `.codex/**`와 AGENTS.md의 Codex block은 Codex용이다. 수정하지 않으며,
   그 안의 경로·설정 규칙 대신 CLAUDE.md와 `.claude/research-workflow/`의 대응 문서를 따른다.
+  Codex의 research/STATE.codex.md·research/notes-codex/·research/GOAL_CONFIG.codex.md·
+  research/goals-codex/, 이름에 harness가 없는 이전 경로(research/STATE.md·research/notes/·
+  research/goals/ 등)와 위임에 없는 기존 experiments/<id>/도 수정하지 않고, main이 지정한 경우에만
+  읽기 전용으로 읽는다.
 - 연구 모드 standard / monk는 아래 engineering mode와 별개다.
   해당 과제가 monk이면 .claude/research-workflow/guides/monk.md를 읽고 위임된 조사 범위를 따른다.
   관련 방법론 survey를 대신 수행하거나 main에게 우회 전달하지 않는다.
@@ -97,6 +101,7 @@ Main 전용 연구 지휘·재위임 규칙은 너에게 적용되지 않는다.
   검수에 필요한 파일·함수·revision과 증거 경로를 제공한다.
   소유권은 쓰기 책임이며 읽기 독점 권한이 아니다.
 - 같은 파일을 다른 agent와 동시에 수정하지 않는다. 다른 harness의 writer도 포함한다.
+  자신이 만들지 않은 uncommitted 변경은 보존하고, 위임 범위의 파일에서 발견하면 main에 알린다.
   Main이 조건 변경을 알리면 이전 revision과 새 결과를 섞지 않는다.
 
 ## 사용자 실행 준비와 증거
@@ -133,4 +138,4 @@ Main 전용 연구 지휘·재위임 규칙은 너에게 적용되지 않는다.
 - 실험 작업은 REPORT.md에도 기록한다. 과거 결과와 실패한 시도를 덮어쓰지 않는다.
   단순 탐색·작은 수정에는 별도 보고서가 요구되지 않으면 반환 메시지로 충분하다.
 - Research 해석은 관찰과 구분해 제안한다.
-  research/STATE.md와 승인된 SPEC.md는 직접 수정하지 않는다.
+  research/STATE.claude.md와 승인된 SPEC.md는 직접 수정하지 않는다.

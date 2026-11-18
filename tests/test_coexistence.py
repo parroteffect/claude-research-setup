@@ -1,4 +1,4 @@
-"""Both workflows in one project: namespaces, shared files, and real cross-installer runs."""
+"""Both workflows in one project: separate namespaces and research state, shared templates, real cross-installer runs."""
 from __future__ import annotations
 
 import hashlib
@@ -11,6 +11,9 @@ from _common import ROOT, MANIFEST, COMPAT, ProjectCase, installer, load, codex_
 CODEX = codex_checkout()
 codex_installer = load("codex_installer", CODEX / "scripts/install.py") if CODEX else None
 PROJECT_RULE = "# Project instructions\nKeep raw data read-only.\n"
+CLAUDE_STATE = ("research/STATE.claude.md", "research/GOAL_CONFIG.claude.md")
+CODEX_STATE = ("research/STATE.codex.md", "research/GOAL_CONFIG.codex.md")
+UNSUFFIXED_STATE = ("research/STATE.md", "research/GOAL_CONFIG.md")  # the layout before Codex 5.5.0
 
 
 def sha(data: bytes) -> str:
@@ -30,6 +33,16 @@ class LayoutTests(ProjectCase):
                 self.assertFalse(dest.name.startswith("AGENTS"), item)
             if item["mode"] in ("managed-file", "claude-block"):
                 self.assertTrue(dest.parts[0] in (".claude", "CLAUDE.md"), item)
+            if item["mode"] != "codex-note":
+                self.assertFalse(installer.codex_owned(item["destination"]), item)
+        created = {item["destination"] for item in MANIFEST["files"] if item["mode"] == "create-only"}
+        self.assertEqual(created, set(CLAUDE_STATE))
+        self.assertEqual([installer.SPLIT_FROM[rel] for rel in CLAUDE_STATE], list(zip(UNSUFFIXED_STATE, CODEX_STATE)))
+        # Every research-state name carries its harness; this package installs none without one.
+        for item in MANIFEST["files"]:
+            dest = Path(item["destination"])
+            if dest.parts[0] == "research" and "_templates" not in dest.parts:
+                self.assertTrue(dest.name.endswith(".claude.md"), item)
         self.assertTrue(installer.META.startswith(".claude/research-workflow/"))
         self.assertTrue(installer.BACKUPS.startswith(".claude/research-workflow/"))
 
@@ -45,19 +58,42 @@ class LayoutTests(ProjectCase):
 
     def test_shared_and_identical_files_match_recorded_codex_release(self):
         by_source = {item["source"]: item for item in MANIFEST["files"]}
-        shared = {item["destination"] for item in MANIFEST["files"] if item["mode"] in ("create-only", "shared-file")}
+        shared = {item["destination"] for item in MANIFEST["files"] if item["mode"] == "shared-file"}
         recorded = {entry["destination"] for entry in COMPAT["identical"] if entry["shared_destination"]}
         self.assertEqual(shared, recorded)
+        # Only read-only form templates are shared; no research state lives at a shared path.
+        for rel in shared:
+            self.assertIn("_templates", Path(rel).parts, rel)
         for entry in COMPAT["identical"]:
             data = (ROOT / entry["claude_source"]).read_bytes()
             self.assertEqual(sha(data), entry["sha256"], entry["claude_source"])
             self.assertEqual(by_source[entry["claude_source"]]["sha256"], entry["sha256"])
         self.assertEqual(COMPAT["upstream"], MANIFEST["upstream"])
 
+    def test_derived_files_differ_from_the_codex_release_only_by_their_paths(self):
+        by_source = {item["source"]: item for item in MANIFEST["files"]}
+        self.assertLessEqual(set(CLAUDE_STATE), {entry["destination"] for entry in COMPAT["derived"]})
+        for entry in COMPAT["derived"]:
+            data = (ROOT / entry["claude_source"]).read_bytes()
+            self.assertEqual(by_source[entry["claude_source"]]["destination"], entry["destination"])
+            self.assertNotEqual(entry["destination"], entry["codex_destination"])
+            for ours, theirs in entry["claude_to_codex"]:
+                self.assertIn(ours.encode(), data, entry["claude_source"])
+                data = data.replace(ours.encode(), theirs.encode())
+            self.assertEqual(sha(data), entry["codex_sha256"], entry["claude_source"])
+
     def test_installer_refuses_any_codex_write(self):
-        for rel in (".codex/config.toml", ".codex/agents/engineer.toml", ".codex/research-workflow-install.json"):
+        for rel in (".codex/config.toml", ".codex/agents/engineer.toml", ".codex/research-workflow-install.json",
+                    "research/STATE.codex.md", "research/GOAL_CONFIG.codex.md",
+                    "research/goals-codex/g1/run-state/ledger.jsonl", "research/notes-codex/topic.md",
+                    "research/goals-codex", "research/notes-codex",
+                    "research/STATE.md", "research/GOAL_CONFIG.md", "research/goals/g1/run-state/ledger.jsonl",
+                    "research/notes/topic.md", "research/goals", "research/notes"):
             with self.assertRaises(installer.Conflict):
                 installer.safe_path(self.target, rel)
+        for rel in CLAUDE_STATE + ("research/goals-claude/g1/SETUP.md", "research/notes-claude/topic.md",
+                                   "research/_templates/CANDIDATE.md"):
+            self.assertEqual(installer.safe_path(self.target, rel), self.target / rel)
         self.assertEqual(installer.safe_path(self.target, ".codex/tools/goal_guard.py", write=False),
                          self.target / ".codex/tools/goal_guard.py")
 
@@ -105,6 +141,8 @@ class CrossInstallerTests(ProjectCase):
     def claude_owned(self):
         files = self.snapshot(".claude/")
         files["CLAUDE.md"] = (self.target / "CLAUDE.md").read_bytes()
+        for rel in CLAUDE_STATE:
+            files[rel] = (self.target / rel).read_bytes()
         files.pop(installer.META, None)
         return {k: v for k, v in files.items() if not k.startswith(installer.BACKUPS)}
 
@@ -121,8 +159,12 @@ class CrossInstallerTests(ProjectCase):
         changed = [rel for rel, _, _ in self.install()]
         self.assertEqual(self.snapshot(".codex/"), codex_files)
         self.assertEqual(self.codex_block(), block)
-        self.assertEqual(self.snapshot("experiments/") | self.snapshot("research/"), templates)
-        self.assertFalse(any(rel.startswith(("research/", "experiments/", ".codex")) for rel in changed))
+        # Everything Codex installed is untouched; Claude only adds its own two state files.
+        after = self.snapshot("experiments/") | self.snapshot("research/")
+        self.assertEqual({rel: data for rel, data in after.items() if rel not in CLAUDE_STATE}, templates)
+        self.assertEqual(sorted(rel for rel in changed if rel.startswith(("research/", "experiments/", ".codex"))),
+                         sorted(CLAUDE_STATE))
+        self.assertFalse(any("starts empty" in note for note in self.notes), self.notes)
         agents = self.read("AGENTS.md")
         self.assertTrue(agents.startswith(PROJECT_RULE))
         self.assertEqual(agents.count(installer.NOTE_BEGIN), 1)
@@ -135,10 +177,15 @@ class CrossInstallerTests(ProjectCase):
         self.install()
         self.assertFalse((self.target / "AGENTS.md").exists())
         owned = self.claude_owned()
-        self.codex_install()
+        for rel in CODEX_STATE:
+            self.assertFalse((self.target / rel).exists(), rel)
+        created = self.codex_install()
         self.assertEqual(self.claude_owned(), owned)
+        # Codex creates its own state next to Claude's instead of adopting it.
+        for rel in CODEX_STATE:
+            self.assertIn(rel, created)
         for entry in COMPAT["identical"]:
-            if entry["shared_destination"] and entry["destination"] not in ("research/STATE.md", "research/GOAL_CONFIG.md"):
+            if entry["shared_destination"]:
                 self.assertEqual(sha((self.target / entry["destination"]).read_bytes()), entry["sha256"])
         # Re-running this installer now tells Codex about the Claude workflow, and nothing else.
         changed = sorted(rel for rel, _, _ in self.install())
@@ -169,6 +216,99 @@ class CrossInstallerTests(ProjectCase):
         self.assertEqual((self.target / installer.CODEX_GUARD).read_bytes(), (self.target / installer.GUARD).read_bytes())
         self.assertEqual(json.loads(self.read(installer.CODEX_META))["version"], MANIFEST["upstream"]["version"])
         self.assertFalse(any(note.startswith("ATTENTION") for note in self.notes), self.notes)
+        # Separate files, same form: either harness can read the other's state when the user asks.
+        for ours, theirs in zip(CLAUDE_STATE, CODEX_STATE):
+            self.assertNotEqual(self.read(ours), self.read(theirs))
+            self.assertEqual([line for line in self.read(ours).splitlines() if line.startswith("#")],
+                             [line for line in self.read(theirs).splitlines() if line.startswith("#")])
+
+    def test_each_harness_keeps_its_own_research_state_across_reinstalls(self):
+        self.codex_install()
+        self.install()
+        records = {"research/STATE.codex.md": "# Codex state\ncodex decision\n",
+                   "research/GOAL_CONFIG.codex.md": "# Codex goal\n",
+                   "research/goals-codex/g1/run-state/ledger.jsonl": "{}\n",
+                   "research/notes-codex/topic.md": "codex note\n",
+                   "research/goals/g0/run-state/ledger.jsonl": "{}\n",
+                   "research/notes/earlier.md": "note of the earlier layout\n",
+                   "research/STATE.claude.md": "# Claude state\nclaude decision\n",
+                   "research/GOAL_CONFIG.claude.md": "# Claude goal\n",
+                   "research/goals-claude/g1/run-state/ledger.jsonl": "{}\n",
+                   "research/notes-claude/topic.md": "claude note\n",
+                   "experiments/exp-a/SPEC.md": "spec\n"}
+        for rel, text in records.items():
+            self.write(rel, text)
+        for _ in range(2):
+            self.install()
+            self.codex_install()
+        for rel, text in records.items():
+            self.assertEqual(self.read(rel), text, rel)
+        self.assertFalse(any("starts empty" in note for note in self.notes), self.notes)
+        self.assert_both_pass()
+
+    def test_note_tells_codex_which_research_state_is_whose(self):
+        self.codex_install()
+        self.install()
+        agents = self.read("AGENTS.md")
+        note = agents[agents.index(installer.NOTE_BEGIN):agents.index(installer.NOTE_END)]
+        for needle in CLAUDE_STATE + CODEX_STATE + ("research/goals-claude/", "research/notes-claude/",
+                                                    "research/goals-codex/", "research/notes-codex/",
+                                                    "자동으로 읽지 않는다", "사용자가 지시하면", "~/.claude/projects/"):
+            self.assertIn(needle, note)
+        self.assertLess(len(agents.encode()), installer.CODEX_DOC_LIMIT)
+        # The Codex block itself names only Codex's paths.
+        for rel in CLAUDE_STATE:
+            self.assertNotIn(rel, self.codex_block())
+
+    def shared_layout_project(self):
+        """Codex 5.4.0 and Claude 5.4.0+claude.1 in one project: both wrote research/STATE.md."""
+        self.codex_install()
+        self.install()
+        shared = {"research/STATE.md": "# Research state\ncodex and claude decisions\n",
+                  "research/GOAL_CONFIG.md": "User objective and finite budget\n"}
+        for rel in CLAUDE_STATE + CODEX_STATE:
+            (self.target / rel).unlink()
+        for rel, text in shared.items():
+            self.write(rel, text)
+        meta = self.target / installer.META
+        data = json.loads(meta.read_text(encoding="utf-8"))
+        data["version"] = "5.4.0+claude.1"
+        meta.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        return shared
+
+    def assert_split(self, shared):
+        _, _, payload = installer.read_package()
+        for ours, theirs, earlier in zip(CLAUDE_STATE, CODEX_STATE, UNSUFFIXED_STATE):
+            self.assertEqual(self.read(theirs), shared[earlier])
+            self.assertEqual((self.target / ours).read_bytes(), payload[ours])
+            self.assertFalse((self.target / earlier).exists(), earlier)
+        self.assert_both_pass()
+        self.assertEqual(codex_installer.make_plan(self.target, "codex-test")[0], [])
+        self.assertEqual(installer.make_plan(self.target, "test-revision")[0], [])
+
+    def test_shared_layout_upgrade_codex_first(self):
+        shared = self.shared_layout_project()
+        self.assertTrue(any(new is None for _, _, new in codex_installer.make_plan(self.target, "codex-test")[0]))
+        self.codex_install()
+        self.install()
+        # Codex already carried the shared file to its own name; Claude points there and copies nothing.
+        told = [note for note in self.notes if "starts empty" in note]
+        self.assertEqual(len(told), 2, self.notes)
+        self.assertTrue(all(rel in " ".join(told) for rel in CODEX_STATE), told)
+        self.codex_install()
+        self.assert_split(shared)
+
+    def test_shared_layout_upgrade_claude_first(self):
+        shared = self.shared_layout_project()
+        self.install()
+        told = [note for note in self.notes if "starts empty" in note]
+        self.assertEqual(len(told), 2, self.notes)
+        for rel, text in shared.items():
+            self.assertEqual(self.read(rel), text)  # Claude never moves or edits the shared file
+        self.codex_install()
+        self.install()
+        self.codex_install()
+        self.assert_split(shared)
 
     def test_no_codex_note_flag_leaves_agents_md_untouched(self):
         self.codex_install()
@@ -236,9 +376,22 @@ class UpstreamParityTests(unittest.TestCase):
         codex_modes = {item["destination"]: item["mode"] for item in codex_manifest["files"]}
         for item in MANIFEST["files"]:
             if item["mode"] == "create-only":
-                self.assertEqual(codex_modes[item["destination"]], "create-only")
+                # Claude's state is never a path the Codex package installs; its counterpart is create-only there.
+                self.assertNotIn(item["destination"], codex_modes)
+                self.assertEqual(codex_modes[installer.SPLIT_FROM[item["destination"]][1]], "create-only")
             if item["mode"] == "shared-file":
                 self.assertEqual(codex_modes[item["destination"]], "managed-file")
+        for entry in COMPAT["derived"]:
+            self.assertEqual(sha((CODEX / entry["codex_source"]).read_bytes()), entry["codex_sha256"],
+                             entry["codex_source"])
+        for rel in CODEX_STATE:
+            self.assertIn(rel, codex_modes)
+            self.assertTrue(installer.codex_owned(rel))
+        # What Codex carries over on upgrade is exactly what this package treats as the earlier layout.
+        carried = {item["destination"]: item["migrate_from"] for item in codex_manifest["files"] if "migrate_from" in item}
+        self.assertEqual(carried, dict(zip(CODEX_STATE, UNSUFFIXED_STATE)))
+        for rel in UNSUFFIXED_STATE + tuple(codex_installer.EARLIER_DIRS) + tuple(codex_installer.EARLIER_DIRS.values()):
+            self.assertTrue(installer.codex_owned(rel), rel)
 
     def test_every_upstream_policy_and_guide_heading_survives(self):
         def headings(path):

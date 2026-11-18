@@ -43,13 +43,73 @@ class InstallerTests(ProjectCase):
         self.assertEqual(self.read(".claude/settings.json"), settings)
 
     def test_state_code_results_and_readme_preserved(self):
-        paths = ("research/STATE.md", "research/GOAL_CONFIG.md", "train.py",
+        paths = ("research/STATE.claude.md", "research/GOAL_CONFIG.claude.md", "research/notes-claude/topic.md",
+                 "research/goals-claude/g1/SETUP.md", "research/STATE.codex.md", "research/GOAL_CONFIG.codex.md",
+                 "research/notes-codex/topic.md", "research/goals-codex/g1/SETUP.md", "research/STATE.md",
+                 "research/GOAL_CONFIG.md", "research/notes/topic.md", "research/goals/g1/SETUP.md", "train.py",
                  "experiments/existing/raw.txt", "README.md", "START.txt")
         for rel in paths:
             self.write(rel, "user-owned " + rel)
         self.install()
         for rel in paths:
             self.assertEqual(self.read(rel), "user-owned " + rel)
+
+    def test_fresh_install_creates_only_claude_named_research_state(self):
+        changed = [rel for rel, _, _ in self.install()]
+        self.assertIn("research/STATE.claude.md", changed)
+        self.assertIn("research/GOAL_CONFIG.claude.md", changed)
+        for rel in ("research/STATE.md", "research/GOAL_CONFIG.md", "research/goals", "research/notes",
+                    "research/STATE.codex.md", "research/GOAL_CONFIG.codex.md", "research/goals-codex",
+                    "research/notes-codex"):
+            self.assertFalse((self.target / rel).exists(), rel)
+        self.assertIn("research/notes-claude/", self.read("research/STATE.claude.md"))
+        self.assertIn("research/goals-claude/", self.read("research/GOAL_CONFIG.claude.md"))
+        self.assertFalse(any(note.startswith("ATTENTION") for note in self.notes), self.notes)
+
+    def earlier_release(self, version="5.4.0+claude.1"):
+        """An install of the release that kept Claude's records in the unsuffixed files: no *.claude.md yet."""
+        self.install()
+        (self.target / "research/STATE.claude.md").unlink()
+        (self.target / "research/GOAL_CONFIG.claude.md").unlink()
+        meta = self.target / installer.META
+        data = json.loads(meta.read_text(encoding="utf-8"))
+        data["version"] = version
+        meta.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    def test_upgrade_from_shared_state_reports_and_never_copies_or_edits_it(self):
+        pristine = (ROOT / "payload/research/GOAL_CONFIG.claude.md").read_text(encoding="utf-8")
+        # The shared file is still unsuffixed, or the Codex installer has already carried it to its own name.
+        for state, goal, goal_dir in (("research/STATE.md", "research/GOAL_CONFIG.md", "research/goals/"),
+                                      ("research/STATE.codex.md", "research/GOAL_CONFIG.codex.md", "research/goals-codex/")):
+            with self.subTest(shared=state):
+                self.earlier_release()
+                self.write(state, "# Research state\nearlier decisions\n")
+                self.write(goal, pristine.replace("research/goals-claude/", goal_dir))
+                changed = [rel for rel, _, _ in self.install()]
+                self.assertEqual(self.read(state), "# Research state\nearlier decisions\n")
+                self.assertNotIn("earlier decisions", self.read("research/STATE.claude.md"))
+                self.assertNotIn(state, changed)
+                moved = [note for note in self.notes if "starts empty" in note]
+                # The untouched template of the earlier goal form carries nothing to move.
+                self.assertEqual(len(moved), 1, self.notes)
+                self.assertIn("research/STATE.claude.md", moved[0])
+                self.assertIn(state, moved[0])
+                self.assertTrue(moved[0].startswith("ATTENTION"))
+                # Once Claude's own state exists the reminder is not repeated.
+                self.install()
+                self.assertFalse(any("starts empty" in note for note in self.notes), self.notes)
+                (self.target / state).unlink()
+                (self.target / goal).unlink()
+
+    def test_unsuffixed_state_of_unknown_origin_is_reported_once_and_left_alone(self):
+        self.write("research/STATE.md", "someone's earlier record\n")
+        self.install()
+        self.assertEqual(sum("starts empty" in note for note in self.notes), 1, self.notes)
+        self.assertEqual(self.read("research/STATE.md"), "someone's earlier record\n")
+        # A current install that merely lost its state file is not an upgrade from the shared layout.
+        (self.target / "research/STATE.claude.md").unlink()
+        self.install()
+        self.assertFalse(any("starts empty" in note for note in self.notes), self.notes)
 
     def test_custom_engineer_conflict_prevents_all_writes(self):
         self.write(".claude/agents/engineer.md", "---\nname: engineer\ndescription: custom\n---\nkeep\n")
@@ -167,7 +227,7 @@ class InstallerTests(ProjectCase):
                       str(Path(self.tmp.name).anchor)):
             with self.assertRaises(installer.Conflict):
                 installer.target_root(value)
-        for rel in ("../outside", ".git/config", ".codex/config.toml"):
+        for rel in ("../outside", ".git/config", ".codex/config.toml", "research/STATE.md", "research/STATE.codex.md"):
             with self.assertRaises(installer.Conflict):
                 installer.safe_path(self.target, rel)
 

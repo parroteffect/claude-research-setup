@@ -71,17 +71,44 @@ class PolicyTests(unittest.TestCase):
     def test_block_states_the_claude_specific_contract(self):
         block = (PAYLOAD / "CLAUDE.block.md").read_text(encoding="utf-8")
         self.assertTrue(block.startswith("# Research workflow\n"))
-        for needle in ("## 공통: Codex workflow와의 공존", "Claude Code에서는 이 block이 우선한다",
-                       "한 checkout의 writer는 harness를 통틀어 하나다", "harness 공통으로 하나다",
+        for needle in ("## 공통: Codex workflow와의 독립 운영", "Claude Code에서는 이 block이 우선한다",
+                       "서로 독립적으로 연구한다", "Goal은 harness별로 독립이다", "자동으로 읽지 않는다",
+                       "사용자가 지시하면", "~/.codex/sessions/", "research/STATE.claude.md",
+                       "research/notes-claude/", "research/GOAL_CONFIG.claude.md", "research/goals-claude/",
+                       "research/STATE.codex.md", "research/notes-codex/", "research/GOAL_CONFIG.codex.md",
+                       "research/goals-codex/", "이름에 harness가 없는 이전 경로", "코드 working tree는 하나다",
                        "Agent 도구의 `effort` 인자 사용을 명시적으로 요청한다", '`subagent_type: "engineer"`',
                        "high / xhigh만 사용한다", "USER-ONLY", "auto memory", "SendMessage",
                        "Agent 도구를 disallow한다"):
             self.assertIn(needle, block)
         self.assertNotIn(installer.BEGIN, block)
         note = (PAYLOAD / "AGENTS.coexistence.md").read_text(encoding="utf-8")
-        for needle in ("`.claude/research-workflow/`", "harness를 통틀어 하나다", "harness 공통으로 하나다"):
+        for needle in ("`.claude/research-workflow/`", "서로 독립적으로 연구한다", "Goal은 harness별로 독립이다",
+                       "자동으로 읽지 않는다", "사용자가 지시하면", "research/STATE.claude.md",
+                       "코드 working tree는 하나다"):
             self.assertIn(needle, note)
         self.assertNotIn(installer.CODEX_BEGIN, note)
+        for stale in ("harness를 통틀어 하나", "harness 공통으로 하나", "두 harness가 공유"):
+            for path in CLAUDE_FILES:
+                self.assertNotIn(stale, path.read_text(encoding="utf-8"), path.name)
+
+    def test_claude_files_name_codex_research_state_only_as_the_other_harness_paths(self):
+        bare = re.compile(r"research/(?:STATE|GOAL_CONFIG)(?:\.codex)?\.md|research/(?:goals|notes)(?:-codex)?/")
+        for path in CLAUDE_FILES:
+            if path.name == "AGENTS.coexistence.md":
+                continue
+            text = path.read_text(encoding="utf-8")
+            for match in bare.finditer(text):
+                window = text[max(0, match.start() - 200):match.end() + 200]
+                self.assertTrue("Codex" in window or "공유 템플릿" in window or "이전 경로" in window,
+                                f"{path.relative_to(ROOT)}: {match.group()} is not marked as Codex's path")
+        for rel, needle in ((".claude/research-workflow/RESEARCH_START.txt", "research/STATE.claude.md"),
+                            (".claude/research-workflow/guides/goal.md", "research/GOAL_CONFIG.claude.md"),
+                            (".claude/research-workflow/guides/goal.md", "research/goals-claude/g1/run-state"),
+                            (".claude/research-workflow/guides/monk.md", "research/notes-claude/"),
+                            (".claude/research-workflow/guides/interactive-research.md", "research/STATE.claude.md"),
+                            (".claude/agents/engineer.md", "research/STATE.claude.md")):
+            self.assertIn(needle, (PAYLOAD / rel).read_text(encoding="utf-8"), rel)
 
     def test_manifest_integrity(self):
         self.assertEqual(len(DESTINATIONS), len(MANIFEST["files"]))

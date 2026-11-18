@@ -4,11 +4,16 @@
 Python 3.9+ is required. Default: plan only. Use --apply to write; --check performs
 static checks only and does not claim that a running Claude Code session is ready.
 
-Coexistence contract with codex-research-setup (same project, both installed):
+Independence contract with codex-research-setup (same project, both installed):
 - nothing is ever written under .codex/, and the CODEX RESEARCH WORKFLOW block of
   AGENTS.md is never edited; only a separately marked coexistence note may be appended;
-- harness-neutral templates are shared byte-for-byte and are never overwritten while
-  the Codex workflow is installed (that package keeps updating them);
+- the two harnesses keep separate, harness-named research state. This package creates
+  research/STATE.claude.md and research/GOAL_CONFIG.claude.md and never writes the Codex workflow's
+  research/STATE.codex.md, research/GOAL_CONFIG.codex.md, research/goals-codex/, research/notes-codex/,
+  nor the unsuffixed paths of the layout before Codex 5.5.0 (research/STATE.md, research/GOAL_CONFIG.md,
+  research/goals/, research/notes/);
+- only the read-only form templates under */_templates/ are shared byte-for-byte, and they are
+  never overwritten while the Codex workflow is installed (that package keeps updating them);
 - .claude/settings*.json is never read for writing and never modified.
 """
 from __future__ import annotations
@@ -39,6 +44,17 @@ CODEX_END = "<!-- END CODEX RESEARCH WORKFLOW -->"
 CODEX_META = ".codex/research-workflow-install.json"
 CODEX_GUARD = ".codex/tools/goal_guard.py"
 CODEX_DOC_LIMIT = 32 * 1024  # Codex's documented default project-instruction budget.
+# Research state of the Codex workflow: its harness-named paths, and the unsuffixed paths used
+# before Codex 5.5.0. Neither set is ever written by this installer.
+CODEX_RESEARCH_FILES = ("research/STATE.codex.md", "research/GOAL_CONFIG.codex.md",
+                        "research/STATE.md", "research/GOAL_CONFIG.md")
+CODEX_RESEARCH_DIRS = ("research/goals-codex", "research/notes-codex", "research/goals", "research/notes")
+# Releases of this package that kept Claude's records in the unsuffixed files, shared with Codex.
+SHARED_STATE_RELEASES = ("5.4.0+claude.1",)
+# Claude-owned create-only state -> where such a release wrote instead: the unsuffixed path, or the
+# Codex-named path once the Codex installer (5.5.0+) has carried that file over.
+SPLIT_FROM = {"research/STATE.claude.md": ("research/STATE.md", "research/STATE.codex.md"),
+              "research/GOAL_CONFIG.claude.md": ("research/GOAL_CONFIG.md", "research/GOAL_CONFIG.codex.md")}
 
 WORKDIR = ".claude/research-workflow"
 META = WORKDIR + "/install.json"
@@ -61,11 +77,18 @@ def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def codex_owned(relative: str) -> bool:
+    rel = Path(relative)
+    posix = rel.as_posix()
+    return (rel.parts[0] == ".codex" or posix in CODEX_RESEARCH_FILES
+            or any(posix == d or posix.startswith(d + "/") for d in CODEX_RESEARCH_DIRS))
+
+
 def safe_path(root: Path, relative: str, write: bool = True) -> Path:
     rel = Path(relative)
     if rel.is_absolute() or not rel.parts or any(p in ("..", ".git") for p in rel.parts):
         raise Conflict(f"Unsafe path: {relative!r}")
-    if write and rel.parts[0] == ".codex":
+    if write and codex_owned(relative):
         raise Conflict(f"Refusing to write a Codex-owned path: {relative}")
     p = root
     for part in rel.parts:
@@ -176,7 +199,7 @@ def read_package() -> tuple[dict, dict, dict[str, bytes]]:
         if digest(data) != item["sha256"]:
             raise Conflict(f"Payload checksum mismatch: {item['source']}")
         destination = Path(item["destination"])
-        if item["mode"] != "codex-note" and (destination.parts[0] == ".codex" or destination.name.startswith("AGENTS")):
+        if item["mode"] != "codex-note" and (codex_owned(item["destination"]) or destination.name.startswith("AGENTS")):
             raise Conflict(f"Manifest destination belongs to the Codex workflow: {item['destination']}")
         files[item["destination"]] = data
     return manifest, legacy, files
@@ -233,8 +256,8 @@ def coexistence_notices(target: Path, manifest: dict, payload: dict[str, bytes],
         notes.append(f"ATTENTION policy revisions differ: installed Codex workflow {codex['version']} vs this port of "
                      f"{upstream.get('version')}; align both packages before relying on shared templates")
     if codex["guard"] is not None and codex["guard"] != payload[GUARD]:
-        notes.append("ATTENTION goal guard copies differ between harnesses; do not write one goal ledger from both "
-                     "until the revisions are reconciled")
+        notes.append("ATTENTION goal guard copies differ between harnesses; do not continue a goal started by the "
+                     "other harness until the revisions are reconciled")
     return notes
 
 
@@ -290,6 +313,21 @@ def make_plan(target: Path, revision: str, codex_note: bool = True
             if old is not None:
                 new = old
                 notices.append(f"PRESERVED existing {rel}")
+            elif rel in SPLIT_FROM:
+                unsuffixed, codex_named = SPLIT_FROM[rel]
+                if previous.get("version") in SHARED_STATE_RELEASES:
+                    candidates = (unsuffixed, codex_named)  # Claude's earlier records are in one of these
+                elif not previous and not codex["installed"]:
+                    candidates = (unsuffixed,)  # an older record of unknown origin
+                else:
+                    candidates = ()  # a fresh install next to Codex: those files are simply Codex's
+                for earlier_rel in candidates:
+                    earlier = read_bytes(safe_path(target, earlier_rel, write=False))
+                    if earlier is not None and digest(earlier) not in legacy.get(earlier_rel, []):
+                        notices.append(f"ATTENTION {rel} starts empty: Claude's research state is now kept apart from "
+                                       f"{earlier_rel}, which is left untouched and is no longer read automatically. "
+                                       "If an earlier Claude session recorded work there, ask Claude to carry over "
+                                       "what is still needed (BOOTSTRAP.md)")
         elif mode == "shared-file":
             if tracked_shared.get(rel):
                 known.add(tracked_shared[rel])
@@ -443,7 +481,7 @@ def check(target: Path) -> int:
         agents = decode(read_bytes(safe_path(target, "AGENTS.md", write=False)))
         if block(agents, NOTE_BEGIN, NOTE_END) is None:
             notes.append("Codex is installed but AGENTS.md has no coexistence note; Codex is not told to leave "
-                         "CLAUDE.md and .claude/ alone")
+                         "CLAUDE.md, .claude/ and Claude's research state alone")
     for source in effort_overrides(target):
         notes.append(f"CLAUDE_CODE_EFFORT_LEVEL is set in {source}; it overrides subagent and per-spawn effort")
     for note in notes:
@@ -454,7 +492,8 @@ def check(target: Path) -> int:
         return 2
     print("PASS local file presence, subagent frontmatter (name, default effort, no model pin, no nested spawn), "
           "and the CLAUDE.md block")
-    print("PASS coexistence layout: no file of this package lives under .codex/ or in the Codex AGENTS.md block")
+    print("PASS independence layout: no file of this package lives under .codex/, in the Codex AGENTS.md block, "
+          "or at a Codex research-state path (research/*.codex.md, research/*-codex/, or the earlier unsuffixed ones)")
     print("NOT_CHECKED user/managed settings and environment overrides, the active instruction chain, runtime "
           "subagent registration, or the effort actually applied to a spawn")
     print(f"NEXT restart Claude Code in the target project, then read {WORKDIR}/VERIFY_SETUP.md")

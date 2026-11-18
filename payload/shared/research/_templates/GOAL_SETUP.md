@@ -2,9 +2,9 @@
 
 DRAFT · Main 기록 / 사용자 예산 승인 / 독립 QA 검수.
 이 Markdown은 운영상 검토하는 회계 기록이다. goal_guard가 강제·자동 계측하지 않는다.
-복사 위치: `research/goals/<id>/SETUP.md`. 작성본은 재설치로 초기화하지 않는다.
+복사 위치: `research/goals-codex/<id>/SETUP.md`. 작성본은 재설치로 초기화하지 않는다.
 이 과제 root는 문서 부모이며 guard의 --state가 아니다. RUN init는 아직 없는 별도 child
-`research/goals/<id>/run-state/`를 사용하고 이후 helper 명령도 같은 child를 참조한다.
+`research/goals-codex/<id>/run-state/`를 사용하고 이후 helper 명령도 같은 child를 참조한다.
 
 - Goal ID / 사용자 요청·승인 근거 / 기록 revision:
 - 상태: NOT_AUTHORIZED / PREPARING / COMPLETED / HANDOFF / EXHAUSTED

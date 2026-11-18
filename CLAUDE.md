@@ -23,8 +23,18 @@ When asked to maintain this distribution:
 - Coexistence invariants, enforced by `tests/test_coexistence.py`:
   - never write under `.codex/` or inside the `CODEX RESEARCH WORKFLOW` block of `AGENTS.md`;
   - never modify `.claude/settings*.json`;
-  - keep every file listed in `codex-compat.json` byte-identical to the recorded Codex release
-    (copy it from upstream; do not edit it here);
+  - keep research state separate per harness: this package installs and refers to
+    `research/STATE.claude.md`, `research/notes-claude/`, `research/GOAL_CONFIG.claude.md`,
+    `research/goals-claude/`, and never writes the Codex workflow's `research/STATE.codex.md`,
+    `research/notes-codex/`, `research/GOAL_CONFIG.codex.md`, `research/goals-codex/`, nor the
+    unsuffixed paths of the layout before Codex 5.5.0. Never install a research-state file whose
+    name carries no harness. Claude files may name the Codex paths only as the other harness's
+    paths (read on the user's instruction, never automatically);
+  - keep every file under `identical` in `codex-compat.json` byte-identical to the recorded Codex
+    release (copy it from upstream; do not edit it here), and every file under `derived` equal to
+    its upstream file after the listed path substitutions (re-derive it from upstream);
+  - `legacy-hashes.json` also lists the pristine upstream templates of the earlier shared paths, so
+    that an upgrade does not report an untouched template as a record to carry over;
   - keep markers, metadata, and backup paths distinct from the Codex package's.
 - Keep main's direct code access, single writer, USER-ONLY final experiments, and adaptive
   high/xhigh. Role files keep `effort: high` as the default only, no `model`, and `Agent` disallowed.

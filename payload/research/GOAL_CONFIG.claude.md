@@ -76,5 +76,5 @@ cost_metered = false
 cost_enforced = false
 ```
 
-Agent가 작성할 계약·검수·설정 해석은 `research/goals/<id>/`의 별도 문서에 남긴다.
+Agent가 작성할 계약·검수·설정 해석은 `research/goals-claude/<id>/`의 별도 문서에 남긴다.
 현재 schema는 `research/_templates/GOAL_CONFIG.md`를 참고한다. 작성본을 덮어써 갱신하지 않는다.

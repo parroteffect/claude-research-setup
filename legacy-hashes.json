@@ -1,1 +1,14 @@
-{}
+{
+  "research/STATE.md": [
+    "74dce131fe7521c4b7b2c68cfc007fce58f4e6a91405a8cab6f310c29a17a526"
+  ],
+  "research/GOAL_CONFIG.md": [
+    "3fb1b52f1daff7efdabb7a812d694f862d34349689063c86518e49f859ace250"
+  ],
+  "research/STATE.codex.md": [
+    "1ec85240b620628097a74ec0208d5ccfd6651c7bfc72ca346b8b01b85d855fd9"
+  ],
+  "research/GOAL_CONFIG.codex.md": [
+    "1c4ebf0d614fe3ea2071a24a2f664c33d8b9db1ae56a64b16a1779169dfb00e5"
+  ]
+}

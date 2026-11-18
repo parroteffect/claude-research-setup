@@ -1,36 +1,36 @@
 {
   "upstream": {
     "package": "codex-research-workflow",
-    "version": "5.4.0",
-    "revision": "9bde25294ee2efdb98bca87965c092bdb5d320ce"
+    "version": "5.5.0",
+    "revision": "99f8f0f42666420e12ad7dd356350b77e2c68037"
   },
-  "comment": "Files that must stay byte-identical to the recorded Codex release. shared_destination=true means both packages install the file at the same project path.",
+  "comment": "identical: files that must stay byte-identical to the recorded Codex release; shared_destination=true means both packages install the file at the same project path. derived: Claude-owned files that equal the Codex file after applying the listed claude_to_codex path substitutions; they are installed at a different path and are never shared at runtime.",
   "codex_owned": [
     ".codex/**",
     "AGENTS.md: CODEX RESEARCH WORKFLOW block",
-    "AGENTS.override.md"
+    "AGENTS.override.md",
+    "research/STATE.codex.md",
+    "research/GOAL_CONFIG.codex.md",
+    "research/goals-codex/**",
+    "research/notes-codex/**",
+    "earlier layout (before Codex 5.5.0): research/STATE.md, research/GOAL_CONFIG.md, research/goals/**, research/notes/**"
   ],
   "claude_owned": [
     "CLAUDE.md: CLAUDE RESEARCH WORKFLOW block",
     ".claude/agents/{engineer,qa,supervisor}.md",
     ".claude/research-workflow/**",
-    "AGENTS.md: CLAUDE-CODEX COEXISTENCE NOTE"
+    "AGENTS.md: CLAUDE-CODEX COEXISTENCE NOTE",
+    "research/STATE.claude.md",
+    "research/GOAL_CONFIG.claude.md",
+    "research/goals-claude/**",
+    "research/notes-claude/**"
+  ],
+  "shared": [
+    "research/_templates/**",
+    "experiments/_templates/**",
+    "experiments/<id>/** (owned by whichever harness created it)"
   ],
   "identical": [
-    {
-      "claude_source": "payload/shared/research/STATE.md",
-      "codex_source": "payload/research/STATE.md",
-      "destination": "research/STATE.md",
-      "shared_destination": true,
-      "sha256": "74dce131fe7521c4b7b2c68cfc007fce58f4e6a91405a8cab6f310c29a17a526"
-    },
-    {
-      "claude_source": "payload/shared/research/GOAL_CONFIG.md",
-      "codex_source": "payload/research/GOAL_CONFIG.md",
-      "destination": "research/GOAL_CONFIG.md",
-      "shared_destination": true,
-      "sha256": "3fb1b52f1daff7efdabb7a812d694f862d34349689063c86518e49f859ace250"
-    },
     {
       "claude_source": "payload/shared/experiments/_templates/REPORT.md",
       "codex_source": "payload/experiments/_templates/REPORT.md",
@@ -64,7 +64,7 @@
       "codex_source": "payload/research/_templates/GOAL_CONFIG.md",
       "destination": "research/_templates/GOAL_CONFIG.md",
       "shared_destination": true,
-      "sha256": "3fb1b52f1daff7efdabb7a812d694f862d34349689063c86518e49f859ace250"
+      "sha256": "1c4ebf0d614fe3ea2071a24a2f664c33d8b9db1ae56a64b16a1779169dfb00e5"
     },
     {
       "claude_source": "payload/shared/research/_templates/GOAL_PROGRESS.md",
@@ -78,7 +78,7 @@
       "codex_source": "payload/research/_templates/GOAL_SETUP.md",
       "destination": "research/_templates/GOAL_SETUP.md",
       "shared_destination": true,
-      "sha256": "f89450a38288b4fbe98c38b775de2ad7904a069a8bfe7d46b0ea9876fbe5273b"
+      "sha256": "6f0c341abb37d80b1868f00d9f665d6a43041e45fc4c555cb96a8cd2236011c4"
     },
     {
       "claude_source": "payload/shared/research/_templates/PROXY_CONTRACT.md",
@@ -94,14 +94,51 @@
       "codex_destination": ".codex/tools/goal_guard.py",
       "shared_destination": false,
       "sha256": "4f25b7ef81daa1610180113c03b5045e0378b422549241971399a9e9a74a0b47"
+    }
+  ],
+  "derived": [
+    {
+      "claude_source": "payload/research/STATE.claude.md",
+      "codex_source": "payload/research/STATE.codex.md",
+      "destination": "research/STATE.claude.md",
+      "codex_destination": "research/STATE.codex.md",
+      "claude_to_codex": [
+        [
+          "research/notes-claude/",
+          "research/notes-codex/"
+        ]
+      ],
+      "codex_sha256": "1ec85240b620628097a74ec0208d5ccfd6651c7bfc72ca346b8b01b85d855fd9"
+    },
+    {
+      "claude_source": "payload/research/GOAL_CONFIG.claude.md",
+      "codex_source": "payload/research/GOAL_CONFIG.codex.md",
+      "destination": "research/GOAL_CONFIG.claude.md",
+      "codex_destination": "research/GOAL_CONFIG.codex.md",
+      "claude_to_codex": [
+        [
+          "research/goals-claude/",
+          "research/goals-codex/"
+        ]
+      ],
+      "codex_sha256": "1c4ebf0d614fe3ea2071a24a2f664c33d8b9db1ae56a64b16a1779169dfb00e5"
     },
     {
       "claude_source": "payload/.claude/research-workflow/GOAL_EXAMPLE.md",
       "codex_source": "payload/examples/GOAL_EXAMPLE.md",
       "destination": ".claude/research-workflow/GOAL_EXAMPLE.md",
       "codex_destination": ".codex/GOAL_EXAMPLE.md",
-      "shared_destination": false,
-      "sha256": "bdd0dd3b0646e35436fd9a79e8f0a1679cfbb7499019cb49348a318b30e63f7a"
+      "claude_to_codex": [
+        [
+          "research/GOAL_CONFIG.claude.md",
+          "research/GOAL_CONFIG.codex.md"
+        ],
+        [
+          "research/goals-claude/",
+          "research/goals-codex/"
+        ]
+      ],
+      "codex_sha256": "54d8c83005ba222aad78b4091759cfd7bf38db7d1fa31b9fa058b1ff3dcd7c05"
     }
   ]
 }

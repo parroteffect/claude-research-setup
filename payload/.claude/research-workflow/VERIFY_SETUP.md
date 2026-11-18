@@ -58,17 +58,22 @@
 설정 실패를 해결하려고 model·권한·settings를 임의 변경하거나 무거운 실험을 실행하지 않는다.
 이후 사용자가 연구 시작까지 요청했다면 .claude/research-workflow/RESEARCH_START.txt에 따른다.
 
-## Codex workflow와의 공존 확인
+## Codex workflow와의 독립 운영 확인
 - `.codex/research-workflow-install.json` 또는 AGENTS.md의 CODEX RESEARCH WORKFLOW block이 있으면
   두 workflow가 함께 설치된 프로젝트다. 없으면 이 절은 N/A다.
 - Claude Code는 `CLAUDE.md`가 있으면 기본적으로 AGENTS.md를 읽지 않는다. 현재 세션에 Codex block이
   함께 로드되어 있다면(설정 또는 `@AGENTS.md` import) CLAUDE block의 우선 규칙을 적용 중인지 확인한다.
   AGENTS.md의 marker 밖 프로젝트 고유 지침이 CLAUDE.md에 반영되지 않았다면 그 사실을 보고한다.
 - `.codex/**`와 AGENTS.md의 Codex block을 읽기만 하고 수정하지 않는다. AGENTS.md의
-  CLAUDE-CODEX COEXISTENCE NOTE 유무를 보고한다. 없으면 Codex 쪽은 공존 규칙을 전달받지 못한 상태다.
+  CLAUDE-CODEX COEXISTENCE NOTE 유무를 보고한다. 없으면 Codex 쪽은 독립 운영 규칙을 전달받지 못한 상태다.
 - `.claude/research-workflow/tools/goal_guard.py`와 `.codex/tools/goal_guard.py`의 내용이 같은지,
-  두 설치 metadata의 upstream version이 같은지 확인한다. 다르면 goal ledger 공유 전 정리 대상으로 보고한다.
-- research/STATE.md의 활성 작업에 다른 harness의 미완료 writer가 기록되어 있는지 읽고 보고한다.
+  두 설치 metadata의 upstream version이 같은지 확인한다. 다르면 사용자가 goal 인계를 지시하기 전 정리 대상으로 보고한다.
+- research/STATE.claude.md와 research/GOAL_CONFIG.claude.md가 있는지 확인한다. Codex의
+  research/STATE.codex.md·research/notes-codex/·research/GOAL_CONFIG.codex.md·research/goals-codex/와
+  이름에 harness가 없는 이전 경로(research/STATE.md·research/notes/·research/GOAL_CONFIG.md·research/goals/)는
+  존재 여부만 보고하고, 사용자가 지시하지 않았다면 내용을 읽거나 수정하지 않는다. 이전 버전에서 Claude가
+  Codex와 함께 쓰던 STATE(지금은 research/STATE.codex.md 또는 research/STATE.md)에 남긴 기록이 있을 수
+  있으면 그 사실만 알리고, 옮길 내용은 사용자 지시를 받아 정한다.
   이 확인을 위해 Codex를 실행하거나 상대 harness의 thread를 제어하지 않는다.
 
 ## 선택적 Goal 설치 확인

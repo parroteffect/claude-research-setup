@@ -130,7 +130,7 @@ class GoalTests(unittest.TestCase):
             with self.subTest(text=text[:50]), self.assertRaises(guard.GuardError):
                 guard.config_from(self.config_path)
         with self.assertRaises(guard.GuardError):
-            guard.config_from(ROOT / 'payload/shared/research/GOAL_CONFIG.md')
+            guard.config_from(ROOT / 'payload/research/GOAL_CONFIG.claude.md')
 
     def test_zero_metadata_budget_refuses_before_writes(self):
         self.cfg['limits']['disk_bytes'] = 0
@@ -162,7 +162,28 @@ class GoalTests(unittest.TestCase):
         commands = [line for line in examples if line.startswith('python3 ') and '--state ' in line]
         self.assertEqual(len(commands), 5)
         for command in commands:
-            self.assertEqual(command.split('--state ', 1)[1].split()[0], '/project/research/goals/g1/run-state')
+            self.assertEqual(command.split('--state ', 1)[1].split()[0], '/project/research/goals-claude/g1/run-state')
+            self.assertIn('--config /project/research/GOAL_CONFIG.claude.md', command)
+
+    def test_claude_and_codex_goals_in_one_project_share_no_lock_or_budget(self):
+        research = self.root / 'research'
+        (research / 'goals/g1').mkdir(parents=True)
+        (research / 'goals-claude/g1').mkdir(parents=True)
+        codex_config, claude_config = research / 'GOAL_CONFIG.md', research / 'GOAL_CONFIG.claude.md'
+        codex_state, claude_state = research / 'goals/g1/run-state', research / 'goals-claude/g1/run-state'
+        for config, state in ((codex_config, codex_state), (claude_config, claude_state)):
+            config.write_text(markdown(self.cfg))
+            self.assertEqual(guard.init(config, state)['status'], 'READY_FOR_LIGHT_REVIEW')
+        # While one harness holds its own ledger lock, the other harness's goal keeps working.
+        with guard.locked(codex_state):
+            guard.reserve(claude_config, claude_state, self.plan('claude-1'))
+            with self.assertRaisesRegex(guard.GuardError, 'locked'):
+                guard.status(codex_config, codex_state)
+        # The reservation is charged to Claude's ledger only.
+        self.assertEqual(guard.status(claude_config, claude_state)['charged']['cpu_seconds'], 10)
+        self.assertEqual(guard.status(codex_config, codex_state)['charged']['cpu_seconds'], 0)
+        self.assertEqual(len((codex_state / 'ledger.jsonl').read_text().splitlines()), 1)
+        self.assertEqual(len((claude_state / 'ledger.jsonl').read_text().splitlines()), 2)
 
     def test_freeze_rejects_config_contract_source_or_snapshot_change(self):
         self.start()
