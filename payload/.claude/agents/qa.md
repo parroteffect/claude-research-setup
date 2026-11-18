@@ -24,9 +24,9 @@ Engineer에 필요한 수정을 Main으로 요청한다. 위임된 작은 valida
 개별 후보의 예약 초과/일시 concurrency 부족은 그 시도만 보류하며 전체 goal 종료로 판정하지 않는다.
 잔여 예산 안에서 다른 유용한 연구/검토를 이어갈 수 있음을 Main에 반환한다.
 자식 agent·별도 Claude Code/Codex 세션·scheduler·원격 우회·유료 API 실험 금지. 사용자 job은 제어하지 않는다.
-`.codex/**`와 AGENTS.md의 Codex block은 Codex용이므로 수정하지 않는다. Goal은 harness별로 독립이며
-Main이 지정한 research/goals-claude/의 ledger만 쓰고 Codex의 research/goals-codex/(이전 경로
-research/goals/ 포함)에는 기록하지 않는다.
+`.codex/**`와 AGENTS.md의 Codex block은 Codex용이므로 수정하지 않는다. Goal은 slot별로 독립이며
+Main이 전달한 slot의 research/goals-<slot>/ ledger만 쓰고 다른 slot(Codex의 research/goals-codex<N>/,
+이전 경로 research/goals/ 포함)에는 기록하지 않는다. research/SESSIONS.claude.md는 수정하지 않는다.
 QA validity VALID/INVALID/UNVERIFIED와 실행 상태를 반환하고 과학적 기각을 대신하지 않는다.
 Bug/invalid comparison/OOM/timeout/예산 부족을 hypothesis rejection으로 바꾸지 않는다.
 동일 검수 경로는 exact revision 자동 checks를 재사용하며 호출/검토/재시도 비용을 포함한다.

@@ -7,11 +7,11 @@ static checks only and does not claim that a running Claude Code session is read
 Independence contract with codex-research-setup (same project, both installed):
 - nothing is ever written under .codex/, and the CODEX RESEARCH WORKFLOW block of
   AGENTS.md is never edited; only a separately marked coexistence note may be appended;
-- the two harnesses keep separate, harness-named research state. This package creates
-  research/STATE.claude.md and research/GOAL_CONFIG.claude.md and never writes the Codex workflow's
-  research/STATE.codex.md, research/GOAL_CONFIG.codex.md, research/goals-codex/, research/notes-codex/,
-  nor the unsuffixed paths of the layout before Codex 5.5.0 (research/STATE.md, research/GOAL_CONFIG.md,
-  research/goals/, research/notes/);
+- research state is kept per session slot, named after its harness: claude<N> here, codex<N> there.
+  This package creates slot 0 only (research/STATE.claude0.md, research/GOAL_CONFIG.claude0.md) and the
+  session map research/SESSIONS.claude.md; sessions create further slots from research/_templates/.
+  It never writes a Codex slot (research/*.codex<N>.md, research/*-codex<N>/, research/SESSIONS.codex.md)
+  nor the unnumbered or unsuffixed paths of earlier Codex layouts (research/STATE.md, research/goals/, ...);
 - only the read-only form templates under */_templates/ are shared byte-for-byte, and they are
   never overwritten while the Codex workflow is installed (that package keeps updating them);
 - .claude/settings*.json is never read for writing and never modified.
@@ -44,17 +44,19 @@ CODEX_END = "<!-- END CODEX RESEARCH WORKFLOW -->"
 CODEX_META = ".codex/research-workflow-install.json"
 CODEX_GUARD = ".codex/tools/goal_guard.py"
 CODEX_DOC_LIMIT = 32 * 1024  # Codex's documented default project-instruction budget.
-# Research state of the Codex workflow: its harness-named paths, and the unsuffixed paths used
-# before Codex 5.5.0. Neither set is ever written by this installer.
-CODEX_RESEARCH_FILES = ("research/STATE.codex.md", "research/GOAL_CONFIG.codex.md",
-                        "research/STATE.md", "research/GOAL_CONFIG.md")
-CODEX_RESEARCH_DIRS = ("research/goals-codex", "research/notes-codex", "research/goals", "research/notes")
+# Research state of the Codex workflow, never written by this installer: its slots (codex<N>), its
+# session map, the unnumbered names of Codex 5.5.0 and the unsuffixed paths used before that.
+CODEX_RESEARCH = re.compile(r"research/(?:(?:STATE|GOAL_CONFIG)(?:\.codex\d*)?\.md|SESSIONS\.codex\.md"
+                            r"|(?:goals|notes)(?:-codex\d*)?(?:/.*)?)")
 # Releases of this package that kept Claude's records in the unsuffixed files, shared with Codex.
 SHARED_STATE_RELEASES = ("5.4.0+claude.1",)
-# Claude-owned create-only state -> where such a release wrote instead: the unsuffixed path, or the
-# Codex-named path once the Codex installer (5.5.0+) has carried that file over.
-SPLIT_FROM = {"research/STATE.claude.md": ("research/STATE.md", "research/STATE.codex.md"),
-              "research/GOAL_CONFIG.claude.md": ("research/GOAL_CONFIG.md", "research/GOAL_CONFIG.codex.md")}
+# Claude's slot 0 state -> where such a release wrote instead: the unsuffixed path, or the Codex
+# name that a later Codex installer has carried that file over to.
+SPLIT_FROM = {"research/STATE.claude0.md": ("research/STATE.md", "research/STATE.codex.md", "research/STATE.codex0.md"),
+              "research/GOAL_CONFIG.claude0.md": ("research/GOAL_CONFIG.md", "research/GOAL_CONFIG.codex.md",
+                                                  "research/GOAL_CONFIG.codex0.md")}
+# Unnumbered directories of 5.5.0+claude.1. Their records stay in place as slot 0's records.
+EARLIER_DIRS = ("research/notes-claude", "research/goals-claude")
 
 WORKDIR = ".claude/research-workflow"
 META = WORKDIR + "/install.json"
@@ -79,9 +81,7 @@ def digest(data: bytes) -> str:
 
 def codex_owned(relative: str) -> bool:
     rel = Path(relative)
-    posix = rel.as_posix()
-    return (rel.parts[0] == ".codex" or posix in CODEX_RESEARCH_FILES
-            or any(posix == d or posix.startswith(d + "/") for d in CODEX_RESEARCH_DIRS))
+    return rel.parts[0] == ".codex" or CODEX_RESEARCH.fullmatch(rel.as_posix()) is not None
 
 
 def safe_path(root: Path, relative: str, write: bool = True) -> Path:
@@ -262,7 +262,8 @@ def coexistence_notices(target: Path, manifest: dict, payload: dict[str, bytes],
 
 
 def make_plan(target: Path, revision: str, codex_note: bool = True
-              ) -> tuple[list[tuple[str, bytes | None, bytes]], list[str]]:
+              ) -> tuple[list[tuple[str, bytes | None, bytes | None]], list[str]]:
+    """Return (changes, notices). A change is (path, expected current bytes, new bytes); new bytes None removes the file."""
     manifest, legacy, payload = read_package()
     previous_data = read_bytes(safe_path(target, META))
     previous = json.loads(decode(previous_data)) if previous_data else {}
@@ -286,6 +287,7 @@ def make_plan(target: Path, revision: str, codex_note: bool = True
         old = read_bytes(path)
         new = payload[rel]
         known = set(legacy.get(rel, []))
+        removal = None
         if mode == "claude-block":
             text, block_hash = managed_block(decode(old), new, BEGIN, END, previous.get("claude_block_hash"),
                                              legacy.get(rel, []), "CLAUDE.md block")
@@ -310,15 +312,29 @@ def make_plan(target: Path, revision: str, codex_note: bool = True
                 notices.append(f"ATTENTION AGENTS.md would be {len(new)} bytes, above Codex's default 32 KiB "
                                "project-instruction budget; the trailing note may be truncated in Codex")
         elif mode == "create-only":
+            # This package's own earlier name for the file (5.5.0+claude.1): carry it over to slot 0.
+            found = [(e, read_bytes(safe_path(target, e))) for e in item.get("migrate_from", [])]
+            found = [(e, data) for e, data in found if data is not None]
             if old is not None:
                 new = old
                 notices.append(f"PRESERVED existing {rel}")
+                for earlier_rel, _ in found:
+                    notices.append(f"ATTENTION both {rel} and the earlier {earlier_rel} exist; {earlier_rel} is left "
+                                   "untouched and is no longer read. Merge what is still needed, then remove it manually")
+            elif found:
+                earlier_rel, earlier = found[0]
+                untouched = digest(earlier) in legacy.get(earlier_rel, [])
+                if not untouched:
+                    new = earlier
+                removal = (earlier_rel, earlier, None)
+                notices.append(f"MIGRATED {earlier_rel} -> {rel} ("
+                               + ("an untouched form, replaced by the current one" if untouched else "same bytes")
+                               + "); the original is kept in the backup")
             elif rel in SPLIT_FROM:
-                unsuffixed, codex_named = SPLIT_FROM[rel]
                 if previous.get("version") in SHARED_STATE_RELEASES:
-                    candidates = (unsuffixed, codex_named)  # Claude's earlier records are in one of these
+                    candidates = SPLIT_FROM[rel]  # Claude's earlier records are in one of these
                 elif not previous and not codex["installed"]:
-                    candidates = (unsuffixed,)  # an older record of unknown origin
+                    candidates = SPLIT_FROM[rel][:1]  # an older record of unknown origin
                 else:
                     candidates = ()  # a fresh install next to Codex: those files are simply Codex's
                 for earlier_rel in candidates:
@@ -349,6 +365,14 @@ def make_plan(target: Path, revision: str, codex_note: bool = True
             hashes[rel] = digest(new)
         if old != new:
             changes.append((rel, old, new))
+        if removal:
+            changes.append(removal)
+    if previous and previous.get("version") != manifest["version"]:
+        kept = [d for d in EARLIER_DIRS if safe_path(target, d).is_dir()]
+        if kept:
+            notices.append("KEPT " + ", ".join(d + "/" for d in kept) + ": records of the earlier layout stay at these "
+                           "paths as slot 0's records; new notes and goals use the numbered directories of the "
+                           "session's slot")
     ignore_old = read_bytes(safe_path(target, ".gitignore"))
     ignore_new = append_or_replace(decode(ignore_old), IGNORE, IGNORE_BEGIN, IGNORE_END).encode()
     if ignore_old != ignore_new:
@@ -389,7 +413,7 @@ def atomic_write(path: Path, data: bytes, mode: int | None = None) -> None:
             os.unlink(temporary)
 
 
-def apply_plan(target: Path, changes: list[tuple[str, bytes | None, bytes]]) -> str | None:
+def apply_plan(target: Path, changes: list[tuple[str, bytes | None, bytes | None]]) -> str | None:
     if not changes:
         return None
     # Check the entire plan before any write, and recheck each file at replacement.
@@ -404,7 +428,8 @@ def apply_plan(target: Path, changes: list[tuple[str, bytes | None, bytes]]) -> 
     for rel, old, new in changes:
         records.append({"path": rel, "existed": old is not None,
                         "before_sha256": digest(old) if old is not None else None,
-                        "after_sha256": digest(new)})
+                        "after_sha256": digest(new) if new is not None else None,
+                        "removed": new is None})
         if old is not None:
             atomic_write(safe_path(backup, rel, write=False), old, 0o600)
     atomic_write(backup / "RESTORE.json", (json.dumps(records, indent=2) + "\n").encode(), 0o600)
@@ -413,6 +438,10 @@ def apply_plan(target: Path, changes: list[tuple[str, bytes | None, bytes]]) -> 
         path = safe_path(target, rel)
         if read_bytes(path) != old:
             raise Conflict(f"Concurrent edit at {rel}; some earlier files may be installed. Review backup {backup}")
+        if new is None:
+            # Only a Claude-owned file whose exact bytes are in this backup (and at its new path) is removed.
+            path.unlink()
+            continue
         mode = stat.S_IMODE(path.stat().st_mode) if old is not None else 0o644
         atomic_write(path, new, mode)
     return str(backup)
@@ -444,6 +473,10 @@ def check(target: Path) -> int:
             continue
         if read_bytes(safe_path(target, item["destination"])) is None:
             errors.append(f"Missing {item['destination']}")
+        for earlier_rel in item.get("migrate_from", []):
+            if read_bytes(safe_path(target, earlier_rel)) is not None:
+                notes.append(f"{earlier_rel} of the earlier layout still exists next to {item['destination']}; "
+                             "it is no longer read")
     for role in ROLES:
         data = read_bytes(safe_path(target, f".claude/agents/{role}.md"))
         parsed = frontmatter(decode(data)) if data is not None else None
@@ -493,7 +526,7 @@ def check(target: Path) -> int:
     print("PASS local file presence, subagent frontmatter (name, default effort, no model pin, no nested spawn), "
           "and the CLAUDE.md block")
     print("PASS independence layout: no file of this package lives under .codex/, in the Codex AGENTS.md block, "
-          "or at a Codex research-state path (research/*.codex.md, research/*-codex/, or the earlier unsuffixed ones)")
+          "or at a Codex research-state path (research/*.codex<N>.md, research/*-codex<N>/, or an earlier unnumbered one)")
     print("NOT_CHECKED user/managed settings and environment overrides, the active instruction chain, runtime "
           "subagent registration, or the effort actually applied to a spawn")
     print(f"NEXT restart Claude Code in the target project, then read {WORKDIR}/VERIFY_SETUP.md")
@@ -519,8 +552,8 @@ def main() -> int:
         changes, notes = make_plan(target, args.source_revision, codex_note=not args.no_codex_note)
         for note in notes:
             print(note)
-        for rel, old, _ in changes:
-            print(("CREATE " if old is None else "UPDATE ") + rel)
+        for rel, old, new in changes:
+            print(("REMOVE " if new is None else "CREATE " if old is None else "UPDATE ") + rel)
         print(f"PLAN {len(changes)} changed files")
         if not args.apply:
             print("DRY_RUN no files written; review BOOTSTRAP.md and use --apply when ready")

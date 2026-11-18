@@ -23,18 +23,20 @@ When asked to maintain this distribution:
 - Coexistence invariants, enforced by `tests/test_coexistence.py`:
   - never write under `.codex/` or inside the `CODEX RESEARCH WORKFLOW` block of `AGENTS.md`;
   - never modify `.claude/settings*.json`;
-  - keep research state separate per harness: this package installs and refers to
-    `research/STATE.claude.md`, `research/notes-claude/`, `research/GOAL_CONFIG.claude.md`,
-    `research/goals-claude/`, and never writes the Codex workflow's `research/STATE.codex.md`,
-    `research/notes-codex/`, `research/GOAL_CONFIG.codex.md`, `research/goals-codex/`, nor the
-    unsuffixed paths of the layout before Codex 5.5.0. Never install a research-state file whose
-    name carries no harness. Claude files may name the Codex paths only as the other harness's
-    paths (read on the user's instruction, never automatically);
+  - keep research state per session slot: `claude<N>` owns `research/STATE.claude<N>.md`,
+    `research/notes-claude<N>/`, `research/GOAL_CONFIG.claude<N>.md`, `research/goals-claude<N>/`,
+    and `research/SESSIONS.claude.md` maps session ids to slots. The installer creates slot 0 and
+    the map only, and never writes a Codex slot (`research/*.codex<N>.md`, `research/*-codex<N>/`,
+    `research/SESSIONS.codex.md`) nor an earlier unnumbered or unsuffixed Codex path. Never install
+    a research-state file whose name carries no slot. Payload text names the session's own state
+    with the `<slot>` placeholder; it may name other slots' paths only as someone else's
+    (read on the user's instruction, never automatically);
   - keep every file under `identical` in `codex-compat.json` byte-identical to the recorded Codex
-    release (copy it from upstream; do not edit it here), and every file under `derived` equal to
-    its upstream file after the listed path substitutions (re-derive it from upstream);
-  - `legacy-hashes.json` also lists the pristine upstream templates of the earlier shared paths, so
-    that an upgrade does not report an untouched template as a record to carry over;
+    release (copy it from upstream; do not edit it here). The STATE, GOAL_CONFIG and SESSIONS forms
+    are slot- and harness-neutral templates; slot 0 is created from them, so there is nothing to derive;
+  - `legacy-hashes.json` lists the pristine forms of earlier paths, so that an upgrade neither
+    reports an untouched form as a record to carry over nor keeps it instead of the current form;
+  - the slot protocol is instruction-level, not a lock; keep the two packages' wording of it aligned;
   - keep markers, metadata, and backup paths distinct from the Codex package's.
 - Keep main's direct code access, single writer, USER-ONLY final experiments, and adaptive
   high/xhigh. Role files keep `effort: high` as the default only, no `model`, and `Agent` disallowed.

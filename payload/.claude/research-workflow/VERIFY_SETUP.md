@@ -68,13 +68,20 @@
   CLAUDE-CODEX COEXISTENCE NOTE 유무를 보고한다. 없으면 Codex 쪽은 독립 운영 규칙을 전달받지 못한 상태다.
 - `.claude/research-workflow/tools/goal_guard.py`와 `.codex/tools/goal_guard.py`의 내용이 같은지,
   두 설치 metadata의 upstream version이 같은지 확인한다. 다르면 사용자가 goal 인계를 지시하기 전 정리 대상으로 보고한다.
-- research/STATE.claude.md와 research/GOAL_CONFIG.claude.md가 있는지 확인한다. Codex의
-  research/STATE.codex.md·research/notes-codex/·research/GOAL_CONFIG.codex.md·research/goals-codex/와
-  이름에 harness가 없는 이전 경로(research/STATE.md·research/notes/·research/GOAL_CONFIG.md·research/goals/)는
+- Codex slot의 파일(research/SESSIONS.codex.md, research/*.codex<N>.md, research/*-codex<N>/)과 이름에
+  slot이 없는 이전 경로(research/STATE.md·research/notes/·research/GOAL_CONFIG.md·research/goals/ 등)는
   존재 여부만 보고하고, 사용자가 지시하지 않았다면 내용을 읽거나 수정하지 않는다. 이전 버전에서 Claude가
-  Codex와 함께 쓰던 STATE(지금은 research/STATE.codex.md 또는 research/STATE.md)에 남긴 기록이 있을 수
+  Codex와 함께 쓰던 STATE(지금은 research/STATE.codex0.md 또는 research/STATE.md)에 남긴 기록이 있을 수
   있으면 그 사실만 알리고, 옮길 내용은 사용자 지시를 받아 정한다.
   이 확인을 위해 Codex를 실행하거나 상대 harness의 thread를 제어하지 않는다.
+
+## Slot 확인
+- `echo $CLAUDE_CODE_SESSION_ID`로 세션 id를 확인할 수 있는지 보고한다. 비어 있으면 slot 배정의 자동 복원은
+  NOT_VERIFIED이며 사용자가 번호를 지정해야 한다.
+- research/SESSIONS.claude.md와 0번 slot의 research/STATE.claude0.md·research/GOAL_CONFIG.claude0.md,
+  research/_templates/의 STATE·SESSIONS·GOAL_CONFIG 양식이 있는지 확인한다.
+- CLAUDE.md의 규칙대로 이 세션의 slot을 정해 보고한다. 다른 세션의 active 행을 replaced로 바꿨다면
+  그 세션 id와 last active를 함께 알린다. 확인만을 위해 다른 번호의 slot 파일을 만들지 않는다.
 
 ## 선택적 Goal 설치 확인
 - `.claude/research-workflow/guides/goal.md`, guard, 사용자 GOAL_CONFIG(create-only), template,

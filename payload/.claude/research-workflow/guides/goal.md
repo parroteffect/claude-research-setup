@@ -19,7 +19,7 @@ monk·goal을 전환하거나 사용자의 실행 중 job을 변경하지 않는
 
 ## 시작과 고정 계약
 
-사용자가 `research/GOAL_CONFIG.claude.md`의 하나의 TOML block에 목표·범위·예산·경로를 작성하고
+사용자가 `research/GOAL_CONFIG.<slot>.md`의 하나의 TOML block에 목표·범위·예산·경로를 작성하고
 시작을 요청한다. Agent는 입력을 해석·검사하고 별도 과제 문서에 미정 사항을 기록한다.
 사용자 authorization field를 임의로 채우지 않는다. 0은 금지, 빈칸은 미정이다.
 선택되지 않은 token/cost cap 외 모든 한도는 유한해야 한다. 누락된 중요한 조건은 SETUP 미완료다. SETUP 예산 승인 없이는 새 proxy 준비를 시작하지 않는다.
@@ -151,18 +151,20 @@ Init 전 준비/preflight는 승인된 SETUP 기록에, init 이후는 RUN ledge
 
 Python3.11+가 이미 있는 환경에서 사용한다. 새로운 환경이나 패키지를 설치하지 않는다.
 아래 경로는 실제 과제 경로로 바꾼다. 이 명령은 작은 metadata만 읽고 쓴다.
-`research/goals-claude/g1/`는 SETUP.md와 progress 문서를 두는 이미 존재하는 과제 부모다.
-Guard state는 아직 없는 별도 child `research/goals-claude/g1/run-state/`를 사용한다.
-공유 템플릿에 적힌 `research/goals-codex/<id>/`와 `research/GOAL_CONFIG.codex.md`는 이 경로로 바꿔 읽는다.
+아래 예시는 slot `claude0` 기준이다. 다른 slot은 `GOAL_CONFIG.<slot>.md`와 `goals-<slot>/`로 바꾼다.
+Goal은 slot별로 독립이며 다른 slot의 config·ledger에 예약·기록하지 않는다.
+`research/goals-claude0/g1/`는 SETUP.md와 progress 문서를 두는 이미 존재하는 과제 부모다.
+Guard state는 아직 없는 별도 child `research/goals-claude0/g1/run-state/`를 사용한다.
+이전 버전에서 번호 없는 경로(`research/goals-claude/<id>/` 등)에 init한 goal은 옮기지 않고 그 경로를 그대로 쓴다.
 SETUP 문서가 있는 과제 root를 --state로 넘기지 않는다. Init 후 모든 명령은 같은 child를 참조한다.
 
 ```sh
-python3 .claude/research-workflow/tools/goal_guard.py validate --config /project/research/GOAL_CONFIG.claude.md
-python3 .claude/research-workflow/tools/goal_guard.py init --config /project/research/GOAL_CONFIG.claude.md --state /project/research/goals-claude/g1/run-state
-python3 .claude/research-workflow/tools/goal_guard.py reserve --config /project/research/GOAL_CONFIG.claude.md --state /project/research/goals-claude/g1/run-state --record /project/research/plan.json
-python3 .claude/research-workflow/tools/goal_guard.py finish --config /project/research/GOAL_CONFIG.claude.md --state /project/research/goals-claude/g1/run-state --attempt toy-001 --record /project/research/usage.json
-python3 .claude/research-workflow/tools/goal_guard.py progress --config /project/research/GOAL_CONFIG.claude.md --state /project/research/goals-claude/g1/run-state --meaningful no --evidence review-R2
-python3 .claude/research-workflow/tools/goal_guard.py status --config /project/research/GOAL_CONFIG.claude.md --state /project/research/goals-claude/g1/run-state
+python3 .claude/research-workflow/tools/goal_guard.py validate --config /project/research/GOAL_CONFIG.claude0.md
+python3 .claude/research-workflow/tools/goal_guard.py init --config /project/research/GOAL_CONFIG.claude0.md --state /project/research/goals-claude0/g1/run-state
+python3 .claude/research-workflow/tools/goal_guard.py reserve --config /project/research/GOAL_CONFIG.claude0.md --state /project/research/goals-claude0/g1/run-state --record /project/research/plan.json
+python3 .claude/research-workflow/tools/goal_guard.py finish --config /project/research/GOAL_CONFIG.claude0.md --state /project/research/goals-claude0/g1/run-state --attempt toy-001 --record /project/research/usage.json
+python3 .claude/research-workflow/tools/goal_guard.py progress --config /project/research/GOAL_CONFIG.claude0.md --state /project/research/goals-claude0/g1/run-state --meaningful no --evidence review-R2
+python3 .claude/research-workflow/tools/goal_guard.py status --config /project/research/GOAL_CONFIG.claude0.md --state /project/research/goals-claude0/g1/run-state
 ```
 
 `init` 전에 위 SETUP 완료/독립 QA/불변 artifact gate를 운영상 확인한다. `init`가 RUN freeze이며 부모는 이미 존재해야 한다. 기존 state는 덮어쓰지 않는다. 각 RESERVE는
@@ -187,11 +189,11 @@ Init 시 wall clock부터 pause/interrupt를 포함한다. Compaction·thread·r
 초기화하지 않는다. Helper에는 budget amendment 기능이 없다. 개정이 필요하면 사용자 승인과
 이전 소모/예약·시작시간을 보존한 검토된 migration이 별도 필요하며, 새 init로 우회하지 않는다.
 Checkpoint에 config/contract/ledger/evidence revision과 pending attempt를 남기고 재개 때 대조한다.
-같은 프로젝트에서 Codex workflow와 함께 쓰는 경우 goal은 harness별로 독립이다. Claude Code의 goal은
-`research/GOAL_CONFIG.claude.md`와 `research/goals-claude/`만 쓰고, Codex의 `research/GOAL_CONFIG.codex.md`·
-`research/goals-codex/`(이전 경로 `research/goals/` 포함)에 예약·기록하거나 그 예산을 쓰지 않는다.
-사용자가 Codex goal의 인계를 명시적으로
-지시한 경우에만 그 goal의 기존 config·계약·ledger를 새 init·예산 초기화·중복 예약 없이 이어 쓴다.
+다른 Claude Code slot이나 Codex workflow와 한 프로젝트를 함께 쓰는 경우에도 goal은 slot별로 독립이다.
+자신의 `research/GOAL_CONFIG.<slot>.md`와 `research/goals-<slot>/`만 쓰고, 다른 slot(Codex의
+`research/GOAL_CONFIG.codex<N>.md`·`research/goals-codex<N>/`와 이전 경로 `research/goals/` 포함)에
+예약·기록하거나 그 예산을 쓰지 않는다. 사용자가 다른 slot의 goal 인계를 명시적으로 지시한 경우에만
+그 goal의 기존 config·계약·ledger를 새 init·예산 초기화·중복 예약 없이 이어 쓴다.
 자세한 규칙은 CLAUDE.md의 독립 운영 절을 따른다.
 Executor가 관리할 수 있는 것은 자신의 goal job뿐이며 사용자 job은 중단·변경·재시작하지 않는다.
 

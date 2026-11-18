@@ -1,53 +1,53 @@
 {
   "package": "claude-research-workflow",
-  "version": "5.5.0+claude.1",
+  "version": "5.6.0+claude.1",
   "upstream": {
     "package": "codex-research-workflow",
-    "version": "5.5.0",
-    "revision": "99f8f0f42666420e12ad7dd356350b77e2c68037"
+    "version": "5.6.0",
+    "revision": "083669130330376c669945bbf24f370f98a677ed"
   },
   "files": [
     {
       "source": "payload/CLAUDE.block.md",
       "destination": "CLAUDE.md",
       "mode": "claude-block",
-      "sha256": "47741705144020e63eeb05d47b2099de9ff2d90cee257b34e768cd072a88ec25"
+      "sha256": "623ab53c502b2503d5aeb5dff9375600318c8a6cb43cb25aac37ad70a4fad60a"
     },
     {
       "source": "payload/AGENTS.coexistence.md",
       "destination": "AGENTS.md",
       "mode": "codex-note",
-      "sha256": "2a06d34c46ba9e288c581f746e03eee2c5103522000ec0fc125ab37ee4ef1733"
+      "sha256": "59d353c70fceb3e2d0da0b2e07ce6df6e848962e863d5bdbb3619ae78873e5b5"
     },
     {
       "source": "payload/.claude/agents/engineer.md",
       "destination": ".claude/agents/engineer.md",
       "mode": "managed-file",
-      "sha256": "cec1a560aabd38f4dd87dd0cdf3dace3e8d56dee1dd078e9e94a928d0ca5ebab"
+      "sha256": "26d3b1776f2305d5e5224aa09ba432076e5038f6d1cef32caacb01135d33cd74"
     },
     {
       "source": "payload/.claude/agents/qa.md",
       "destination": ".claude/agents/qa.md",
       "mode": "managed-file",
-      "sha256": "4bc33467a5f51e3079a1ced121ae66bf51a08e67148fd9e881c4053be050548e"
+      "sha256": "79afd43421f53f36e7fa4fd99a3f2902536b3d3e363a49f9cc5a1d04d3f70aa5"
     },
     {
       "source": "payload/.claude/agents/supervisor.md",
       "destination": ".claude/agents/supervisor.md",
       "mode": "managed-file",
-      "sha256": "5bd6b7350ce3e97e910b687c19076ec3d74a096d46e781a991318ad00fbdd979"
+      "sha256": "8af678df7a03f0cc3ad76dc84d681db0db6d2c089ed5a93fc5d2e4c26f0c9bcc"
     },
     {
       "source": "payload/.claude/research-workflow/guides/research.md",
       "destination": ".claude/research-workflow/guides/research.md",
       "mode": "managed-file",
-      "sha256": "252407bdb887bdf09639d4d0d4ff04b9375f7ae3ac11edbe247e4f58baaee07a"
+      "sha256": "cb102d304f4a14f42647159a1f8a12b13ddb64c1f732707024522f64aebc5ce3"
     },
     {
       "source": "payload/.claude/research-workflow/guides/monk.md",
       "destination": ".claude/research-workflow/guides/monk.md",
       "mode": "managed-file",
-      "sha256": "493f4644cc472b45761b0dd25e3775369e5c91062bc7bb3f1913af66cbdeee0f"
+      "sha256": "6b4a8a00c0c03714776df2208e7ec9a16754adcc0e2897e4fdbc377dcce70898"
     },
     {
       "source": "payload/.claude/research-workflow/guides/code-review.md",
@@ -65,13 +65,13 @@
       "source": "payload/.claude/research-workflow/guides/goal.md",
       "destination": ".claude/research-workflow/guides/goal.md",
       "mode": "managed-file",
-      "sha256": "5e882a92cfe9a72dc243e70ce183046cc84ad3f34d30d5c094346388d59fdab9"
+      "sha256": "7bb1afca6f6df6aa128ee68778f981e3c6235ad2f7dc5f1824fd962144c1cc3c"
     },
     {
       "source": "payload/.claude/research-workflow/guides/interactive-research.md",
       "destination": ".claude/research-workflow/guides/interactive-research.md",
       "mode": "managed-file",
-      "sha256": "f1daea8a7013d6f83ada9e6c37bcafbb4c5ad7fcf4f6a3154da9fefda9c9342c"
+      "sha256": "c3fb2664a497c2f9d3860abf172a1195a7d83a74a4887a3586fa9edfb5bb2def"
     },
     {
       "source": "payload/.claude/research-workflow/tools/goal_guard.py",
@@ -83,31 +83,19 @@
       "source": "payload/.claude/research-workflow/VERIFY_SETUP.md",
       "destination": ".claude/research-workflow/VERIFY_SETUP.md",
       "mode": "managed-file",
-      "sha256": "4da997622687ae26ed1225e0a8d2c9ad80c97a03fac43e107319783fb6545e60"
+      "sha256": "fb5f2d056537c7c5fa0a5411d85b12c1cec739e34d57f390fc6f32cef60b7fd2"
     },
     {
       "source": "payload/.claude/research-workflow/RESEARCH_START.txt",
       "destination": ".claude/research-workflow/RESEARCH_START.txt",
       "mode": "managed-file",
-      "sha256": "de63988e7a3bd21c3b0d0933a23826c3c87c525ab7ed637025fc3bab539766c9"
+      "sha256": "e79fd7566015eef9bcb4f063d1926905c39b7adbc67c44616dbeb3edff2b9ded"
     },
     {
       "source": "payload/.claude/research-workflow/GOAL_EXAMPLE.md",
       "destination": ".claude/research-workflow/GOAL_EXAMPLE.md",
       "mode": "managed-file",
-      "sha256": "29f9a8391ff5f919f05ba32df60e2c16d1f37c313bc5c8c085ff043e4aa6714c"
-    },
-    {
-      "source": "payload/research/STATE.claude.md",
-      "destination": "research/STATE.claude.md",
-      "mode": "create-only",
-      "sha256": "9c7580bea2a6bb9af68abd663c0fb3f9667e8fd880ba2a1f05f23afadf557181"
-    },
-    {
-      "source": "payload/research/GOAL_CONFIG.claude.md",
-      "destination": "research/GOAL_CONFIG.claude.md",
-      "mode": "create-only",
-      "sha256": "5b92eca806eb1c07c231cc7a6e5eb83040a7732c31393ec9c5ba4ebb82f10c55"
+      "sha256": "13b2481a6cc913ed52de0cbd03ecd3e4a32146141b80851c33251e5d2122bfa6"
     },
     {
       "source": "payload/shared/experiments/_templates/REPORT.md",
@@ -137,7 +125,7 @@
       "source": "payload/shared/research/_templates/GOAL_CONFIG.md",
       "destination": "research/_templates/GOAL_CONFIG.md",
       "mode": "shared-file",
-      "sha256": "1c4ebf0d614fe3ea2071a24a2f664c33d8b9db1ae56a64b16a1779169dfb00e5"
+      "sha256": "43df19fb46737765bda3f53c1fd19b6e4e16f7e986d3afd364a66de80ddac83f"
     },
     {
       "source": "payload/shared/research/_templates/GOAL_PROGRESS.md",
@@ -149,13 +137,49 @@
       "source": "payload/shared/research/_templates/GOAL_SETUP.md",
       "destination": "research/_templates/GOAL_SETUP.md",
       "mode": "shared-file",
-      "sha256": "6f0c341abb37d80b1868f00d9f665d6a43041e45fc4c555cb96a8cd2236011c4"
+      "sha256": "254ea008d8f31e70b9f134692ebf47fb4b9f4006c14d358c43aae541ff45aa59"
     },
     {
       "source": "payload/shared/research/_templates/PROXY_CONTRACT.md",
       "destination": "research/_templates/PROXY_CONTRACT.md",
       "mode": "shared-file",
       "sha256": "86df781e684d75bdd05bc47476c1905193d7eedea9899991f0fd4457ec1b9194"
+    },
+    {
+      "source": "payload/shared/research/_templates/STATE.md",
+      "destination": "research/_templates/STATE.md",
+      "mode": "shared-file",
+      "sha256": "eafe94d47b076eacada0f2a9c85c00e9dc2280e34f3ad2fe7d19f5965b5ed011"
+    },
+    {
+      "source": "payload/shared/research/_templates/SESSIONS.md",
+      "destination": "research/_templates/SESSIONS.md",
+      "mode": "shared-file",
+      "sha256": "b0a411f6eba9ad789a2928606ddd5a15df6e5b239f9dd9ba827b8efb09908be0"
+    },
+    {
+      "source": "payload/shared/research/_templates/STATE.md",
+      "destination": "research/STATE.claude0.md",
+      "mode": "create-only",
+      "migrate_from": [
+        "research/STATE.claude.md"
+      ],
+      "sha256": "eafe94d47b076eacada0f2a9c85c00e9dc2280e34f3ad2fe7d19f5965b5ed011"
+    },
+    {
+      "source": "payload/shared/research/_templates/GOAL_CONFIG.md",
+      "destination": "research/GOAL_CONFIG.claude0.md",
+      "mode": "create-only",
+      "migrate_from": [
+        "research/GOAL_CONFIG.claude.md"
+      ],
+      "sha256": "43df19fb46737765bda3f53c1fd19b6e4e16f7e986d3afd364a66de80ddac83f"
+    },
+    {
+      "source": "payload/shared/research/_templates/SESSIONS.md",
+      "destination": "research/SESSIONS.claude.md",
+      "mode": "create-only",
+      "sha256": "b0a411f6eba9ad789a2928606ddd5a15df6e5b239f9dd9ba827b8efb09908be0"
     }
   ]
 }

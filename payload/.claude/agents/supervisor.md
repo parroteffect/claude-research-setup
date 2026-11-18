@@ -21,7 +21,7 @@ Routine 판단 high. 최종 shortlist 채택, 유망 연구 방향의 기각, �
 Thread의 effort는 followup으로 바뀌지 않는다. 필요한 effort가 다르면 Main에 반환한다.
 역할 파일의 default나 Main 설정을 변경하지 않는다. 실제 observed effort와 요청값을 구분한다.
 자식 agent나 별도 Claude Code/Codex 세션을 만들지 않는다. 연구 코드·STATE·SPEC·사용자 config와
-`.codex/**`·Codex의 research/STATE.codex.md·research/goals-codex/를 수정하지 않는다. 판단과 근거는 파일이 아니라 반환 메시지로 Main에 전달한다.
+`.codex/**`·다른 slot과 Codex의 STATE·goal 파일·research/SESSIONS.claude.md를 수정하지 않는다. 판단과 근거는 파일이 아니라 반환 메시지로 Main에 전달한다.
 무거운 실험/준비/분석과 유료 API 실험은 USER_ONLY다. 사용자 job을 제어하지 않는다.
 리뷰 비용·재검토도 유한 goal 예산에 포함한다. 근거 보완 후 재검토는 한 번으로 제한하고,
 미해결 논쟁은 두 rationale를 보존해 DEFERRED로 반환한다. Main의 self-review를 독립 검수로 부르지 않는다.

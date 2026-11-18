@@ -48,7 +48,7 @@ USER-ONLY 실행, main의 직접 검수, single-writer와 high/xhigh 규칙은 r
 
 - 같은 제한을 웹·로컬 논문·검색 결과·요약·코드 저장소·인용 추적·다른 agent의 보고에 적용한다.
   내장 subagent(Explore·general-purpose·fork 등), 다른 harness(Codex 등)의 세션·기록을 통한 우회도 같다.
-  사용자 지시로 Codex의 STATE나 세션 기록을 읽을 때도 지시한 범위만 읽고 방법론 노출을 기록한다.
+  사용자 지시로 다른 slot이나 Codex의 STATE·세션 기록을 읽을 때도 지시한 범위만 읽고 방법론 노출을 기록한다.
   관련 논문을 대신 읽게 하거나 수학 검색이라는 이름으로 목표 문제의 해법을 수집하지 않는다.
   제목에 theorem이나 proof가 있다는 사실만으로 관련 방법론 전체를 읽을 수 있는 것은 아니다.
 - 기존 코드와 관찰을 읽고 판단할 수 있다. 정확한 구현·환경 확인에 필요한 API 문서 등은
@@ -125,7 +125,7 @@ USER-ONLY 실행, main의 직접 검수, single-writer와 high/xhigh 규칙은 r
 - Main은 STATE에 연구 모드·적용 과제, 출발 자료, 후보와 수학적 상태,
   선행연구 확인 범위·대기 항목, 다음 행동을 필요한 만큼 기록한다.
   기존 STATE에 항목이 없으면 관련 갱신 때 추가하고 과거 기록을 덮어쓰지 않는다.
-- 상세 내용은 필요할 때 `research/notes-claude/<topic>.md`에 남긴다.
+- 상세 내용은 필요할 때 `research/notes-<slot>/<topic>.md`에 남긴다.
   재사용할 수학적 표현·기법과 성립 조건, 반례·실패한 가정·남은 lemma를 연결한다.
   전체 사고 과정이나 대화 전문을 기록하지 않는다.
 - 배운 도구를 다음 문제의 분석에 활용한다. 모드 선언이나 노트 작성만으로 모델 가중치가
@@ -138,7 +138,7 @@ USER-ONLY 실행, main의 직접 검수, single-writer와 high/xhigh 규칙은 r
 
 ## Goal과의 결합
 연구는 기본 동작이며 goal은 자율 진행, monk는 조사 제한으로 독립이다.
-Goal 요청 시 `.claude/research-workflow/guides/goal.md`와 사용자 `research/GOAL_CONFIG.claude.md`를 읽는다.
+Goal 요청 시 `.claude/research-workflow/guides/goal.md`와 사용자 `research/GOAL_CONFIG.<slot>.md`를 읽는다.
 기존 STATE의 standard는 monk 꺼짐으로 호환한다. QA/Supervisor에도 같은 조사 범위를 적용한다.
 Goal이 연구 발명·유도·반례 분석을 작업 관리로 대체하지 않는다. 예산 소진은 성공이 아니며,
 무거운 필수 검증은 NEEDS_USER_RUN이다. 기각/보강의 교훈을 다음 연구에 반영하고

@@ -29,7 +29,7 @@ Hypothesis status, novelty status, and user approval are separate judgments. -->
 - 핵심 정의·가정 / 도출한 결과 / proof sketch 또는 conjecture / 남은 proof gap:
 - 가장 가까운 선행 접근 / 실제 확인한 차이 / 미확인 novelty:
 - 결론을 바꿀 수 있는 다음 계산·증거·판별 실험:
-- 상세 연구 노트 링크: (필요할 때만 research/notes-claude/<topic>.md 사용)
+- 상세 연구 노트 링크: (필요할 때만 research/notes-<slot>/<topic>.md 사용)
 
 ## Monk 연구 맥락
 <!-- Fill only for a monk task or its follow-up comparison.

@@ -43,9 +43,9 @@ class InstallerTests(ProjectCase):
         self.assertEqual(self.read(".claude/settings.json"), settings)
 
     def test_state_code_results_and_readme_preserved(self):
-        paths = ("research/STATE.claude.md", "research/GOAL_CONFIG.claude.md", "research/notes-claude/topic.md",
-                 "research/goals-claude/g1/SETUP.md", "research/STATE.codex.md", "research/GOAL_CONFIG.codex.md",
-                 "research/notes-codex/topic.md", "research/goals-codex/g1/SETUP.md", "research/STATE.md",
+        paths = ("research/STATE.claude0.md", "research/GOAL_CONFIG.claude0.md", "research/notes-claude0/topic.md",
+                 "research/goals-claude0/g1/SETUP.md", "research/STATE.codex0.md", "research/GOAL_CONFIG.codex0.md",
+                 "research/notes-codex0/topic.md", "research/goals-codex0/g1/SETUP.md", "research/STATE.md",
                  "research/GOAL_CONFIG.md", "research/notes/topic.md", "research/goals/g1/SETUP.md", "train.py",
                  "experiments/existing/raw.txt", "README.md", "START.txt")
         for rel in paths:
@@ -56,43 +56,98 @@ class InstallerTests(ProjectCase):
 
     def test_fresh_install_creates_only_claude_named_research_state(self):
         changed = [rel for rel, _, _ in self.install()]
-        self.assertIn("research/STATE.claude.md", changed)
-        self.assertIn("research/GOAL_CONFIG.claude.md", changed)
+        self.assertIn("research/STATE.claude0.md", changed)
+        self.assertIn("research/GOAL_CONFIG.claude0.md", changed)
         for rel in ("research/STATE.md", "research/GOAL_CONFIG.md", "research/goals", "research/notes",
-                    "research/STATE.codex.md", "research/GOAL_CONFIG.codex.md", "research/goals-codex",
-                    "research/notes-codex"):
+                    "research/STATE.codex0.md", "research/GOAL_CONFIG.codex0.md", "research/goals-codex0",
+                    "research/notes-codex0"):
             self.assertFalse((self.target / rel).exists(), rel)
-        self.assertIn("research/notes-claude/", self.read("research/STATE.claude.md"))
-        self.assertIn("research/goals-claude/", self.read("research/GOAL_CONFIG.claude.md"))
+        self.assertIn("research/notes-<slot>/", self.read("research/STATE.claude0.md"))
+        self.assertIn("research/goals-<slot>/", self.read("research/GOAL_CONFIG.claude0.md"))
+        self.assertIn("| slot | session id | status |", self.read("research/SESSIONS.claude.md"))
         self.assertFalse(any(note.startswith("ATTENTION") for note in self.notes), self.notes)
+        # Only slot 0 exists after an install; it equals the forms sessions use for later slots.
+        self.assertEqual(sorted(p.name for p in (self.target / "research").iterdir()),
+                         ["GOAL_CONFIG.claude0.md", "SESSIONS.claude.md", "STATE.claude0.md", "_templates"])
+        for slot_file, form in (("STATE.claude0.md", "STATE.md"), ("GOAL_CONFIG.claude0.md", "GOAL_CONFIG.md"),
+                                ("SESSIONS.claude.md", "SESSIONS.md")):
+            self.assertEqual((self.target / "research" / slot_file).read_bytes(),
+                             (self.target / "research/_templates" / form).read_bytes())
+
+    def test_other_slots_and_the_session_map_survive_reinstalls(self):
+        self.install()
+        owned = {"research/SESSIONS.claude.md": "# Session slots\n| 0 | id-a | active |\n| 1 | id-b | active |\n",
+                 "research/STATE.claude0.md": "slot 0 decisions\n", "research/STATE.claude1.md": "slot 1 decisions\n",
+                 "research/GOAL_CONFIG.claude1.md": "slot 1 goal\n", "research/notes-claude1/topic.md": "note\n",
+                 "research/goals-claude2/g1/run-state/ledger.jsonl": "{}\n"}
+        for rel, text in owned.items():
+            self.write(rel, text)
+        self.assertEqual(self.install(), [])
+        for rel, text in owned.items():
+            self.assertEqual(self.read(rel), text)
+        self.assertEqual(installer.check(self.target), 0)
+
+    def test_upgrade_from_the_unnumbered_claude_names_of_5_5_0(self):
+        self.earlier_release("5.5.0+claude.1")
+        owned = {"research/STATE.claude.md": "decisions; see research/notes-claude/topic.md\n"}
+        kept = {"research/notes-claude/topic.md": "derivation\n", "research/goals-claude/g1/run-state/ledger.jsonl": "{}\n"}
+        _, legacy, payload = installer.read_package()
+        untouched = payload["research/GOAL_CONFIG.claude0.md"].replace(b"research/goals-<slot>/", b"research/goals-claude/")
+        self.assertIn(installer.digest(untouched), legacy["research/GOAL_CONFIG.claude.md"])
+        (self.target / "research/GOAL_CONFIG.claude.md").write_bytes(untouched)
+        for rel, text in (owned | kept).items():
+            self.write(rel, text)
+        plan, _ = installer.make_plan(self.target, "test-revision")
+        self.assertEqual(sorted(rel for rel, _, new in plan if new is None),
+                         ["research/GOAL_CONFIG.claude.md", "research/STATE.claude.md"])
+        before = self.snapshot()
+        self.write("research/STATE.claude.md", "edited by a running session after planning\n")
+        with self.assertRaises(installer.Conflict):
+            installer.apply_plan(self.target, plan)
+        self.write("research/STATE.claude.md", owned["research/STATE.claude.md"])
+        self.assertEqual(self.snapshot(), before)
+        self.install()
+        self.assertEqual(self.read("research/STATE.claude0.md"), owned["research/STATE.claude.md"])
+        self.assertEqual((self.target / "research/GOAL_CONFIG.claude0.md").read_bytes(), payload["research/GOAL_CONFIG.claude0.md"])
+        for rel in ("research/STATE.claude.md", "research/GOAL_CONFIG.claude.md"):
+            self.assertFalse((self.target / rel).exists(), rel)
+        for rel, text in kept.items():
+            self.assertEqual(self.read(rel), text)
+        self.assertEqual(sum(note.startswith("MIGRATED") for note in self.notes), 2, self.notes)
+        self.assertTrue(any(note.startswith("KEPT research/notes-claude/, research/goals-claude/") for note in self.notes))
+        backup = max((self.target / installer.BACKUPS).iterdir(), key=lambda p: (p / "research/STATE.claude.md").exists())
+        self.assertEqual((backup / "research/STATE.claude.md").read_text(encoding="utf-8"), owned["research/STATE.claude.md"])
+        self.assertEqual(installer.check(self.target), 0)
+        self.assertEqual(installer.make_plan(self.target, "test-revision")[0], [])
 
     def earlier_release(self, version="5.4.0+claude.1"):
-        """An install of the release that kept Claude's records in the unsuffixed files: no *.claude.md yet."""
+        """An install of an earlier release: no slot 0 files yet (by default the one that shared Codex's STATE)."""
         self.install()
-        (self.target / "research/STATE.claude.md").unlink()
-        (self.target / "research/GOAL_CONFIG.claude.md").unlink()
+        (self.target / "research/STATE.claude0.md").unlink()
+        (self.target / "research/GOAL_CONFIG.claude0.md").unlink()
         meta = self.target / installer.META
         data = json.loads(meta.read_text(encoding="utf-8"))
         data["version"] = version
         meta.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     def test_upgrade_from_shared_state_reports_and_never_copies_or_edits_it(self):
-        pristine = (ROOT / "payload/research/GOAL_CONFIG.claude.md").read_text(encoding="utf-8")
+        pristine = (ROOT / "payload/shared/research/_templates/GOAL_CONFIG.md").read_text(encoding="utf-8")
         # The shared file is still unsuffixed, or the Codex installer has already carried it to its own name.
         for state, goal, goal_dir in (("research/STATE.md", "research/GOAL_CONFIG.md", "research/goals/"),
-                                      ("research/STATE.codex.md", "research/GOAL_CONFIG.codex.md", "research/goals-codex/")):
+                                      ("research/STATE.codex.md", "research/GOAL_CONFIG.codex.md", "research/goals-codex/"),
+                                      ("research/STATE.codex0.md", "research/GOAL_CONFIG.codex0.md", "research/goals-<slot>/")):
             with self.subTest(shared=state):
                 self.earlier_release()
                 self.write(state, "# Research state\nearlier decisions\n")
-                self.write(goal, pristine.replace("research/goals-claude/", goal_dir))
+                self.write(goal, pristine.replace("research/goals-<slot>/", goal_dir))
                 changed = [rel for rel, _, _ in self.install()]
                 self.assertEqual(self.read(state), "# Research state\nearlier decisions\n")
-                self.assertNotIn("earlier decisions", self.read("research/STATE.claude.md"))
+                self.assertNotIn("earlier decisions", self.read("research/STATE.claude0.md"))
                 self.assertNotIn(state, changed)
                 moved = [note for note in self.notes if "starts empty" in note]
                 # The untouched template of the earlier goal form carries nothing to move.
                 self.assertEqual(len(moved), 1, self.notes)
-                self.assertIn("research/STATE.claude.md", moved[0])
+                self.assertIn("research/STATE.claude0.md", moved[0])
                 self.assertIn(state, moved[0])
                 self.assertTrue(moved[0].startswith("ATTENTION"))
                 # Once Claude's own state exists the reminder is not repeated.
@@ -107,7 +162,7 @@ class InstallerTests(ProjectCase):
         self.assertEqual(sum("starts empty" in note for note in self.notes), 1, self.notes)
         self.assertEqual(self.read("research/STATE.md"), "someone's earlier record\n")
         # A current install that merely lost its state file is not an upgrade from the shared layout.
-        (self.target / "research/STATE.claude.md").unlink()
+        (self.target / "research/STATE.claude0.md").unlink()
         self.install()
         self.assertFalse(any("starts empty" in note for note in self.notes), self.notes)
 
@@ -227,7 +282,7 @@ class InstallerTests(ProjectCase):
                       str(Path(self.tmp.name).anchor)):
             with self.assertRaises(installer.Conflict):
                 installer.target_root(value)
-        for rel in ("../outside", ".git/config", ".codex/config.toml", "research/STATE.md", "research/STATE.codex.md"):
+        for rel in ("../outside", ".git/config", ".codex/config.toml", "research/STATE.md", "research/STATE.codex0.md"):
             with self.assertRaises(installer.Conflict):
                 installer.safe_path(self.target, rel)
 

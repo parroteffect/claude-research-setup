@@ -17,9 +17,9 @@ Main은 설치에 필요한 파일 확인·병합·가벼운 정적 검증을 �
 - 무거운 실제 테스트·학습·평가·benchmark·데이터 준비는 사용자만 실행한다.
 - 설치 요청만으로 monk·interactive-research·goal을 활성화하지 않는다.
 - **Codex workflow가 같은 프로젝트에 있으면 그대로 보존한다.** `.codex/**`와 `AGENTS.md`의
-  `CODEX RESEARCH WORKFLOW` block은 읽기만 한다. Codex의 연구 상태(`research/STATE.codex.md`,
-  `research/notes-codex/`, `research/GOAL_CONFIG.codex.md`, `research/goals-codex/`)와 이름에 harness가 없는
-  이전 경로(`research/STATE.md` 등)는 수정하지 않고, 설치를 위해 내용을 읽을 필요도 없다.
+  `CODEX RESEARCH WORKFLOW` block은 읽기만 한다. Codex slot의 파일(`research/SESSIONS.codex.md`,
+  `research/*.codex<N>.md`, `research/*-codex<N>/`)과 번호나 harness 이름이 없는 Codex의 이전 경로
+  (`research/STATE.md`, `research/notes-codex/` 등)는 수정하지 않고, 설치를 위해 내용을 읽을 필요도 없다.
 
 ## 1. 소스와 대상을 먼저 확정한다
 
@@ -77,9 +77,10 @@ python3 /path/to/source/scripts/install.py --target /path/to/research-project --
 |---|---|
 | `CLAUDE.md` | 기존 프로젝트 내용을 보존하고 `CLAUDE RESEARCH WORKFLOW` managed block 추가/갱신 |
 | `.claude/agents/{engineer,qa,supervisor}.md`, `.claude/research-workflow/**` | 신규 생성 또는 확인된 미수정 배포본만 갱신 |
-| `research/STATE.claude.md`, `research/GOAL_CONFIG.claude.md` | 없을 때만 생성; 기존 파일은 보존 |
-| `research/STATE.codex.md`, `research/GOAL_CONFIG.codex.md`, `research/goals-codex/`, `research/notes-codex/` | Codex 쪽 연구 상태. 절대 쓰지 않음 |
-| `research/STATE.md`, `research/GOAL_CONFIG.md`, `research/goals/`, `research/notes/` | Codex 5.5.0 전의 경로. 절대 쓰지 않음 |
+| `research/STATE.claude0.md`, `research/GOAL_CONFIG.claude0.md`, `research/SESSIONS.claude.md` | 없을 때만 생성; 기존 파일은 보존. 이전 이름 `research/STATE.claude.md`·`research/GOAL_CONFIG.claude.md`가 있으면 내용 그대로 옮김 |
+| `research/*.claude<N>.md`, `research/*-claude<N>/` (N≥1) | 설치기가 만들지도 건드리지도 않음. 그 slot의 세션이 양식으로 생성 |
+| `research/SESSIONS.codex.md`, `research/*.codex<N>.md`, `research/*-codex<N>/` | Codex slot. 절대 쓰지 않음 |
+| `research/STATE.md`, `research/goals/`, `research/notes/`, `research/STATE.codex.md`, `research/notes-codex/` 등 | Codex의 이전 경로. 절대 쓰지 않음 |
 | `research/_templates/*`, `experiments/_templates/*` | 없으면 생성. Codex workflow가 있으면 그 패키지 소유로 보고 절대 덮어쓰지 않음 |
 | `AGENTS.md` | Codex workflow가 감지될 때만 별도 marker의 공존 note를 끝에 추가. Codex block은 불변 |
 | `.gitignore` | 설치 백업 폴더 제외 block만 추가 |
@@ -92,22 +93,36 @@ python3 /path/to/source/scripts/install.py --target /path/to/research-project --
 사용자가 `AGENTS.md`를 전혀 건드리지 않기를 원하면 `--no-codex-note`를 쓴다. 이 경우 Codex 쪽은
 `.claude/`·`CLAUDE.md`·Claude의 연구 상태를 보존하고 자동으로 읽지 말라는 규칙을 전달받지 못한다는 점을 보고한다.
 
-### 이전 버전(`5.4.0+claude.1`)에서 올릴 때
+### Slot과 배정표
 
-그 버전은 `research/STATE.md`와 goal을 Codex와 함께 썼다. 이 버전은 Claude의 연구 상태를
-`research/STATE.claude.md`·`research/notes-claude/`·`research/GOAL_CONFIG.claude.md`·`research/goals-claude/`로 나누고,
-Codex 패키지(5.5.0)는 자기 상태를 `research/STATE.codex.md` 등으로 옮긴다. 두 패키지를 같이 올리도록 안내한다.
+연구 상태는 세션 slot(`claude<N>`) 단위다. 설치기는 0번 slot과 배정표 `research/SESSIONS.claude.md`만 만든다.
+
+- 설치를 맡은 세션은 배정표에 자신을 기록하지 않아도 된다. Slot 배정은 재시작한 세션이 `CLAUDE.md`의 규칙과
+  `.claude/research-workflow/VERIFY_SETUP.md`로 한다. 설치 중에 다른 번호의 slot 파일을 미리 만들지 않는다.
+- 사용자가 여러 세션을 동시에 쓸 계획이면, 두 번째 세션부터 첫 메시지에 번호를 지정해야 한다는 점을 알린다.
+- 기존 slot 파일과 배정표는 재설치로 바뀌지 않는다. 사용자가 손댄 배정표를 정리·초기화하지 않는다.
+
+### 이전 버전에서 올릴 때
+
+**`5.4.0+claude.1`.** 그 버전은 `research/STATE.md`와 goal을 Codex와 함께 썼다. 이 버전은 Claude의 연구 상태를
+0번 slot(`research/STATE.claude0.md` 등)으로 나누고, Codex 패키지(5.6.0)는 자기 상태를 `research/STATE.codex0.md`
+등으로 옮긴다. 두 패키지를 같이 올리도록 안내한다.
 
 - 이 설치기는 새 파일을 빈 양식으로 만들 뿐, 함께 쓰던 STATE의 내용을 복사하거나 고치지 않는다.
-  그 파일은 Codex 설치기를 먼저 돌렸으면 `research/STATE.codex.md`에, 아니면 `research/STATE.md`에 있다.
+  그 파일은 Codex 설치기를 먼저 돌렸으면 `research/STATE.codex0.md`에, 아니면 `research/STATE.md`에 있다.
   `ATTENTION … starts empty`가 가리키는 경로와 아래 선택지를 사용자에게 보고한다.
-- `research/STATE.md`를 `research/STATE.codex.md`로 옮기는 것은 Codex 설치기의 일이다. 이 설치기나 설치를
+- `research/STATE.md`를 `research/STATE.codex0.md`로 옮기는 것은 Codex 설치기의 일이다. 이 설치기나 설치를
   맡은 Claude가 대신 옮기지 않는다. 사용자가 요청한 경우에만 Codex 설치기를 실행한다.
 - 옮길 내용은 사용자가 정한다. 사용자가 지시하면 그 파일을 읽기 전용으로 읽고 Claude 작업에
-  해당하는 항목만 출처와 함께 `research/STATE.claude.md`에 옮긴다. 원본에서 지우지 않는다.
+  해당하는 항목만 출처와 함께 `research/STATE.claude0.md`에 옮긴다. 원본에서 지우지 않는다.
 - Claude가 이전 버전에서 시작해 `research/goals/` 아래에 ledger가 있는 goal은 옮기거나 새로 init하지 않는다.
   사용자가 계속하라고 지시하면 그 goal의 기존 config·ledger 경로를 그대로 쓴다.
-- 설치 중에 임의로 파일 이름을 바꾸거나 함께 쓰던 STATE를 `research/STATE.claude.md`로 복사하지 않는다.
+- 설치 중에 임의로 파일 이름을 바꾸거나 함께 쓰던 STATE를 `research/STATE.claude0.md`로 복사하지 않는다.
+
+**`5.5.0+claude.1`.** 설치기가 `research/STATE.claude.md`와 `research/GOAL_CONFIG.claude.md`를 0번 slot의 이름으로
+내용 그대로 옮기고 원본을 백업에 남긴다(`MIGRATED`, dry run의 `REMOVE` 줄). 손대지 않은 양식은 현재 양식으로
+바꾼다. `research/notes-claude/`·`research/goals-claude/`는 옮기지 않고 0번 slot의 기록으로 계속 쓴다(`KEPT`).
+`ATTENTION both … exist`가 나오면 두 파일을 읽고 사용자와 병합 방향을 정한다.
 
 ### Codex workflow가 함께 있을 때
 
@@ -157,8 +172,8 @@ subagent가 등록되지 않을 수 있다. 파일 설치 후 기존 세션에 �
 - Source revision, 실제 대상 경로, 변경/보존/수동 병합한 파일.
 - 백업 경로, 정적 검증 PASS/FAIL/NOT_VERIFIED, `REVIEW` 항목.
 - `FILES_INSTALLED` / `PARTIAL` / `BLOCKED`, runtime은 `NOT_VERIFIED` 여부.
-- Codex workflow 공존 상태: 감지 여부, note 추가 여부, version·guard 일치 여부, AGENTS.md fallback 처리,
-  새로 만든 Claude 연구 상태 파일과 `starts empty` 안내 여부.
+- Codex workflow 공존 상태: 감지 여부, note 추가 여부, version·guard 일치 여부, AGENTS.md fallback 처리.
+- 연구 상태: 새로 만든 0번 slot 파일과 배정표, `MIGRATED`·`KEPT`·`starts empty` 안내 여부.
 - 재시작이 필요하면 다음에 붙여넣을 메시지를 제공하고 멈춘다.
 
 ```text

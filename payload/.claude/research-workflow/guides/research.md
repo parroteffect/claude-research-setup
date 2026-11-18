@@ -134,7 +134,7 @@ Monk에서는 아래의 원문·인접 분야 탐색과 문헌 대조를 monk gu
 
 ## Goal과의 결합
 연구는 기본 동작이며 goal은 자율 진행, monk는 조사 제한으로 독립이다.
-Goal 요청 시 `.claude/research-workflow/guides/goal.md`와 사용자 `research/GOAL_CONFIG.claude.md`를 읽는다.
+Goal 요청 시 `.claude/research-workflow/guides/goal.md`와 사용자 `research/GOAL_CONFIG.<slot>.md`를 읽는다.
 기존 STATE의 standard는 monk 꺼짐으로 호환한다. QA/Supervisor에도 같은 조사 범위를 적용한다.
 Goal이 연구 발명·유도·반례 분석을 작업 관리로 대체하지 않는다. 예산 소진은 성공이 아니며,
 무거운 필수 검증은 NEEDS_USER_RUN이다. 기각/보강의 교훈을 다음 연구에 반영하고

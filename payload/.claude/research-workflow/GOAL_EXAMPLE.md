@@ -7,7 +7,7 @@
 
 작성 순서:
 
-1. 사용자가 유한 **SETUP 배정**과 `research/GOAL_CONFIG.claude.md`의 **RUN 배정**을 별도로 정한다.
+1. 사용자가 유한 **SETUP 배정**과 `research/GOAL_CONFIG.<slot>.md`의 **RUN 배정**을 별도로 정한다.
    단일 총액이면 사용자가 분할을 명시적으로 승인한다. Main은 `research/_templates/GOAL_SETUP.md`로
    `SETUP.md`에 승인·최초 시작 UTC·deadline·작업 전 예약·actual/UNKNOWN·실패/재시도·잔여를 기록한다.
    SETUP 미승인 시 준비 금지다. 예를 들어 RUN이 CPU 전용이면 `gpu_ids=[]`, `vram_mib=0`,
@@ -20,8 +20,8 @@
    불변 확인 후에만 RUN init한다. 한도 안에서 미완료면 handoff다. SETUP Markdown은 운영상 검수하며
    guard가 강제/계측하지 않는다. Executor/필수 hard limit가 없으면 실험은 NEEDS_USER_RUN이다.
 4. SETUP 비용 링크·RUN 배정·합산 비용/UNKNOWN을 GOAL_PROGRESS에 남긴다. SETUP.md/progress가 있는
-   `research/goals-claude/<id>/`는 부모로 유지하고, init의 --state는 아직 없는 child
-   `research/goals-claude/<id>/run-state/`로 지정해 RUN을 freeze한다. 이후 모든 helper도 같은 child를 쓴다.
+   `research/goals-<slot>/<id>/`는 부모로 유지하고, init의 --state는 아직 없는 child
+   `research/goals-<slot>/<id>/run-state/`로 지정해 RUN을 freeze한다. 이후 모든 helper도 같은 child를 쓴다.
    RUN elapsed는 이때 시작한다. 원래 end-to-end deadline과 과거 사용량은 초기화하지 않는다.
    미사용 배정 자동 이전은 금지다. Init 이후 허용된 preflight도 RUN ledger에 예약한다.
 5. 아래는 **freeze 이후 파일에 기록할 JSON 예약 예시**다. 명령이나 실제 실행 요청이 아니다.

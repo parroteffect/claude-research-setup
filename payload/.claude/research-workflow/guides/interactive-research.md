@@ -83,7 +83,7 @@ novelty는 UNVERIFIED로 남긴다. 이 설계 근거는 완전한 증명·성�
   사용자 전환 선택이 가설의 검증이나 문헌상 novelty 확인을 대신하지 않는다.
 
 ## 최소한의 상태와 위임
-Main은 기존 `research/STATE.claude.md`에 필요할 때만 작은 선택적 항목을 추가한다.
+Main은 기존 `research/STATE.<slot>.md`에 필요할 때만 작은 선택적 항목을 추가한다.
 활성 여부·적용 과제와 선택 근거, 현재 phase, 합의한 질문·제약,
 상태(`working` / `awaiting-user` / `paused` / `closed`), 선택 방향·근거 링크,
 다음 사용자 결정을 짧게 남긴다. 별도 사용자 작성 config나 매번 새 문서는 요구하지 않는다.
